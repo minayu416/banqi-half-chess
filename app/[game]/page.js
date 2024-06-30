@@ -33,6 +33,8 @@ export default function Page({ params }) {
         <Header/>
         <div className="min-h-screen py-24 px-12 flex w-full">
             <div className="w-2/3 flex flex-col justify-center items-center">
+
+              對手
                 {/* TODO Banqi bg another option: #9C836A*/}
                 <div className="h-3/5 w-full border rounded-md p-3" style={{backgroundColor: "#96602E", borderColor: "#C18859"}}>
                     <div className="w-full h-full border-2 rounded-md" style={{borderColor: "#3C3B3B"}}>
@@ -41,6 +43,7 @@ export default function Page({ params }) {
                         </div>
                     </div>
                 </div>
+                我
                 </div>
             <div className="w-1/3 flex flex-col justify-center items-center">
                 {/* TODO implement chat room, refer Fancy chat room */}

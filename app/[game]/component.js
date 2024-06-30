@@ -43,7 +43,7 @@ export const ChessGenerator = () => {
     const { colors, chessOptions } = banqiGeneratePolicy;
     colors.forEach(color => {
         Object.keys(chessOptions).forEach(chess => {
-            const sn = `${color}-${chess.substring(0, 1)}`;
+            const sn = `${color}-${chess}`;
             for (let i = 0; i < chessOptions[chess]; i++) {
                 banqiGeneratedPool.push({
                     sn: `${sn}-${i}`,
