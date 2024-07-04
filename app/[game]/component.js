@@ -68,8 +68,21 @@ const shuffleArray = (array) => {
 
 
 export const ChessShuffleHandler = () => {
+
+    let shuffledChess = []
     const banqiPool = ChessGenerator()
-    const shuffledChess = shuffleArray(banqiPool);
+    // position
+    let i = 0
+    shuffleArray(banqiPool).forEach(chess => {
+        shuffledChess.push({
+            position: i ++,
+            sn: chess.sn,
+            color: chess.color,
+            type: chess.chess,
+            chineseName: chess.chineseName
+        });
+    })
+    console.log(shuffledChess)
     return shuffledChess;
 
 };
