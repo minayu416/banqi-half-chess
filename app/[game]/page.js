@@ -5,6 +5,10 @@ import React, { useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 
+import { DragPreviewImage, useDrag } from 'react-dnd'
+
+import { ItemTypes } from './type';
+
 import Header from "../component";
 
 import { ChessShuffleHandler } from "./component"
@@ -21,11 +25,19 @@ import { ChessShuffleHandler } from "./component"
 
 // 可能要在這一層render 不同的棋子
 const Piece = ({chess}) => {
-  console.log(chess)
+  const [{ isDragging }, drag, preview] = useDrag(
+    () => ({
+      type: ItemTypes.KNIGHT,
+      collect: (monitor) => ({
+        isDragging: !!monitor.isDragging(),
+      }),
+    }),
+    [],
+  )
     return (
-      <div key={chess.sn} 
+      <div ref={drag} key={chess.sn} 
       className={`absolute rounded-full w-20 h-20 drop-shadow-lg flex justify-center items-center`} 
-      style={{ backgroundColor: "#F1D6AE" }}>
+      style={{ backgroundColor: "#F1D6AE", opacity: isDragging ? 0.5 : 1, }}>
    <div className="rounded-full w-[4.5rem] h-[4.5rem] border-2 flex justify-center items-center" style={{ borderColor: chess.color }}>
        <p className="text-5xl lxgw-wenkai-tc-regular select-none" style={{ color: chess.color }}>{ chess.chineseName }
        </p>
@@ -68,6 +80,7 @@ const BoardSquare = ({ pos, children, game }) => {
 }
 
 function Board() {
+  // TODO: 傳game 進來
   // 在這一層會設定棋子的初始 x, y 軸 (從 game 傳進來)、然後帶入後面的chess 判斷、結合這兩個變數
   const [shuffledChess, setShuffledChess] = useState([]);
   const [isLoading, setIsLoading] = useState([]);
