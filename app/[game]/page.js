@@ -21,22 +21,72 @@ import Header from "../component";
 // 可能要在這一層render 不同的棋子
 function Draggable(props) {
 
-  return (      
-  <div key={props.children.sn} 
-      className={`absolute rounded-full w-20 h-20 drop-shadow-lg flex justify-center items-center`} 
-      style={{ backgroundColor: "#F1D6AE" }}>
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: `draggable_${props.position}`,
+    data: {
+      sn: props.chess.sn,
+      position: props.position,
+      chess: props.chess
+    },
+  });
+
+  const style = {
+    color: props.chess.sn[0] == '0' ? 'black' : 'red',
+    touchAction: 'none',
+  };
+
+  if (transform) {
+    style['transform'] = `translate3d(${transform.x}px, ${transform.y}px, 0)`;
+  }
+
+  return (  
+    <>
+    {/* TODO: 這邊要修一下 */}
+    {props.chess == '.' ? (
+      <div>{null}</div>
+  ) : ( 
+    <div ref={setNodeRef}
+    key={props.children.sn} 
+    className={`absolute rounded-full w-20 h-20 drop-shadow-lg flex justify-center items-center`} 
+    style={{ backgroundColor: "#F1D6AE", ...style }}
+    {...listeners} {...attributes}>
     <div className="rounded-full w-[4.5rem] h-[4.5rem] border-2 flex justify-center items-center" style={{ borderColor: props.children.color }}>
       <p className="text-5xl lxgw-wenkai-tc-regular select-none" style={{ color: props.children.color }}>{ props.children.chineseName }
       </p>
     </div>
   </div>
+  )}  
+</>
   );
 }
 
 function DroppableCell(props) {
 
+  console.log(props)
+
+
+  const { active, isOver, setNodeRef } = useDroppable({
+    id: `droppable_${props.position}`,
+    data: {
+      sn: props.chess.sn,
+      position: props.position,
+      chess: props.chess
+    },
+  });
+
+  console.log(active)
+
+  // TODO: 修好了，可是還需要改。
+  const sameSide = active && active.data.current?.sn[0] == (props.chess !== '.' && props.chess.sn[0]);
+
+  const style = {
+    background: isOver ? (sameSide ? 'red' : 'green') : undefined,
+  };
+
   return (
-    <div key={props.position} className="relative w-full h-full border flex justify-center items-center" style={{ borderColor: "#3C3B3B" }}>
+    <div key={props.position} ref={setNodeRef} 
+    className="relative w-full h-full border flex justify-center items-center" 
+    style={{ borderColor: "#3C3B3B", ...style  }}>
       {props.children}
     </div>
   )
@@ -44,10 +94,11 @@ function DroppableCell(props) {
 }
 
 function Board() {
-  // TODO: 傳game 進來
   // 在這一層會設定棋子的初始 x, y 軸 (從 game 傳進來)、然後帶入後面的chess 判斷、結合這兩個變數
   const [shuffledChess, setShuffledChess] = useState([]);
   const [isLoading, setIsLoading] = useState([]);
+
+  const [eventInfo, setEventInfo] = useState('<>');
 
   useEffect(() => {
       // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
@@ -56,45 +107,52 @@ function Board() {
       setIsLoading(false);
    }, []); 
 
-   function handleDragEnd(event) {
+  function handleDragEnd(event) {
+    // TODO: 要能允許移動去空位
+    let activeEvent = event.active;
+    let overEvent = event.over;
 
+    if (!activeEvent?.data?.current || !overEvent?.data?.current) {
+      return;
+    }
+
+    let activeData = activeEvent.data.current;
+    let overData = overEvent.data.current;
+
+    if (activeData.position == overData.position) {
+      // moving to same place
+      setEventInfo('<>');
+      return;
+    }
+
+    if (activeData.chess.sn[0] == overData.chess.sn[0]) {
+      setEventInfo('same side');
+      return;
+    }
+
+    setEventInfo(`${String(event?.active?.id) ?? ''} -> ${String(event?.over?.id) ?? ''}`);
+    shuffledChess[activeData.position] = '.';
+
+    if (overData) {
+      shuffledChess[overData.position] = activeData.chess;
+    }
   }
-
-  const divs = shuffledChess.map((chess, index) => (
-    // 這是方格, 先暫時用index 給格子編號
-      <DroppableCell key={index} chess={chess}>
-        <div key={index} className="relative w-full h-full border flex justify-center items-center" style={{ borderColor: "#3C3B3B" }}>
-        {/* 棋子 */}
-        {chess == '.' ? (
-            <div>{null}</div>
-        ) : (
-          <Draggable key={index} chess={chess}>
-          <div key={chess.sn} 
-              className={`absolute rounded-full w-20 h-20 drop-shadow-lg flex justify-center items-center`} 
-              style={{ backgroundColor: "#F1D6AE" }}>
-            <div className="rounded-full w-[4.5rem] h-[4.5rem] border-2 flex justify-center items-center" style={{ borderColor: chess.color }}>
-              <p className="text-5xl lxgw-wenkai-tc-regular select-none" style={{ color: chess.color }}>{ chess.chineseName }
-              </p>
-            </div>
-          </div>
-          </Draggable>
-        )}
-        </div>
-      </DroppableCell>
-    ));
     return (
+      <>
+      {/* {eventInfo} */}
       <DndContext onDragEnd={handleDragEnd}>
       <div className="w-full h-full grid grid-cols-8">
         {shuffledChess.map((chess, index) => {
           return (
           // 這是方格, 先暫時用index 給格子編號
+          // TODO: 邏輯要優化
             <DroppableCell key={index} position={index} chess={chess}>
               {/* <div key={index} className="relative w-full h-full border flex justify-center items-center" style={{ borderColor: "#3C3B3B" }}> */}
               {/* 棋子 */}
               {chess == '.' ? (
                   <div>{null}</div>
               ) : (
-                <Draggable position={index} name={chess}>
+                <Draggable position={index} chess={chess}>
                   {chess}
                 </Draggable>
               )}
@@ -105,6 +163,7 @@ function Board() {
         }
       </div>
       </DndContext>
+      </>
     )
 }
 
