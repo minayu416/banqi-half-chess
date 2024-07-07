@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/c
 
 import { ChessShuffleHandler } from "./component"
 
-import Header from "../component";
+import { Header } from "../component";
 
 // TODO: Note: 必須要登入Google 帳號才能授權把資料即時更新到google/firestore
 
@@ -37,6 +37,7 @@ function Draggable(props) {
 
   if (transform) {
     style['transform'] = `translate3d(${transform.x}px, ${transform.y}px, 0)`;
+    style['zIndex'] = 10;
   }
 
   return (  
@@ -62,9 +63,6 @@ function Draggable(props) {
 
 function DroppableCell(props) {
 
-  console.log(props)
-
-
   const { active, isOver, setNodeRef } = useDroppable({
     id: `droppable_${props.position}`,
     data: {
@@ -73,8 +71,6 @@ function DroppableCell(props) {
       chess: props.chess
     },
   });
-
-  console.log(active)
 
   // TODO: 修好了，可是還需要改。
   const sameSide = active && active.data.current?.sn[0] == (props.chess !== '.' && props.chess.sn[0]);
@@ -149,6 +145,7 @@ function Board() {
             <DroppableCell key={index} position={index} chess={chess}>
               {/* <div key={index} className="relative w-full h-full border flex justify-center items-center" style={{ borderColor: "#3C3B3B" }}> */}
               {/* 棋子 */}
+              {/* TODO: Draggable */}
               {chess == '.' ? (
                   <div>{null}</div>
               ) : (

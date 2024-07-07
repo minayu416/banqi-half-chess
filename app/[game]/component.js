@@ -82,7 +82,6 @@ export const ChessShuffleHandler = () => {
             chineseName: chess.chineseName
         });
     })
-    console.log(shuffledChess)
     return shuffledChess;
 
 };
