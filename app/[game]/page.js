@@ -11,12 +11,16 @@ import { Header } from "../component";
 // TODO: Note: 必須要登入Google 帳號才能授權把資料即時更新到google/firestore
 
 // TODO: 先確定可以單機動，再考慮上網連動 (注意不要把 firestore 打爆)
-// TODO: Logic: 1. 設計翻牌邏輯，第一個翻牌的人鎖定那方是哪個顏色，要注意持續翻牌不等於有顏色，
-//                 但要紀錄哪一方翻到哪個顏色，並且可以操控他的顏色。還要紀錄交互操作，一人動一次。
+// TODO: Logic: 1. (要特別亮目前是誰的side) 設計翻牌邏輯，第一個翻牌的人鎖定那方是哪個顏色，要注意持續翻牌不等於有顏色，
+//                 但要紀錄哪一方翻到哪個顏色，並且可以操控他的顏色。還要紀錄交互操作，一人動一次。 
 //              2. 要紀錄棋盤的位置 + 棋子，然後寫規則
 //              2.2. 要寫一下怎麼計算棋盤位置的數字
 //              3. 紀錄選擇的選定，然後移動的時候判斷邏輯跟transition
 //              4. 注意的是隨機的棋子最後是蓋牌，不能存在客戶端被看到 (但這之後再處理，可能要random後直接存在後端或者firestore)
+
+// 1. 重構一下儲存跟傳遞的Params
+// 2. 允許空白可以放棋
+// 3. 根據規則移動、根據邏輯取決需不需要調整紀錄位置的資料結構
 
 // 可能要在這一層render 不同的棋子
 function Draggable(props) {
@@ -92,7 +96,6 @@ function DroppableCell(props) {
 function Board() {
   // 在這一層會設定棋子的初始 x, y 軸 (從 game 傳進來)、然後帶入後面的chess 判斷、結合這兩個變數
   const [shuffledChess, setShuffledChess] = useState([]);
-  const [isLoading, setIsLoading] = useState([]);
 
   const [eventInfo, setEventInfo] = useState('<>');
 
@@ -100,7 +103,6 @@ function Board() {
       // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
       const randomChess = ChessShuffleHandler();
       setShuffledChess(randomChess);
-      setIsLoading(false);
    }, []); 
 
   function handleDragEnd(event) {
