@@ -18,9 +18,11 @@ import { Header } from "../component";
 //              3. 紀錄選擇的選定，然後移動的時候判斷邏輯跟transition
 //              4. 注意的是隨機的棋子最後是蓋牌，不能存在客戶端被看到 (但這之後再處理，可能要random後直接存在後端或者firestore)
 
+// TODO:
 // 1. 重構一下儲存跟傳遞的Params
-// 2. 允許空白可以放棋
+// 2. 允許空白可以放棋 [v]
 // 3. 根據規則移動、根據邏輯取決需不需要調整紀錄位置的資料結構
+// 4. 判斷可否移動的背景顏色可能需要重構程式碼(包含空位也可以選)
 
 // 可能要在這一層render 不同的棋子
 function Draggable(props) {
@@ -76,9 +78,10 @@ function DroppableCell(props) {
     },
   });
 
-  // TODO: 修好了，可是還需要改。
+  // TODO: 需要更改邏輯。
   const sameSide = active && active.data.current?.sn[0] == (props.chess !== '.' && props.chess.sn[0]);
 
+  // TODO: 判斷移動空位時也可以是green
   const style = {
     background: isOver ? (sameSide ? 'red' : 'green') : undefined,
   };
@@ -117,9 +120,20 @@ function Board() {
     let activeData = activeEvent.data.current;
     let overData = overEvent.data.current;
 
+    console.log(activeData)
+    console.log(overData)
+
     if (activeData.position == overData.position) {
       // moving to same place
       setEventInfo('<>');
+      return;
+    }
+
+    if (overData.chess === "." && (activeData.position !== overData.position)) {
+      // moving to another empty place
+      shuffledChess[overData.position] = activeData.chess;
+      shuffledChess[activeData.position] = '.';
+      setEventInfo(`${String(event?.active?.id) ?? ''} -> ${String(event?.over?.id) ?? ''}`);
       return;
     }
 
