@@ -7,6 +7,8 @@ import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/c
 import { ChessShuffleHandler } from "./component"
 
 import { Header } from "../component";
+import { ChessRules } from './rules';
+import { rule } from 'postcss';
 
 // TODO: Note: 必須要登入Google 帳號才能授權把資料即時更新到google/firestore
 
@@ -20,8 +22,6 @@ import { Header } from "../component";
 
 // TODO:
 // 1. 重構一下儲存跟傳遞的Params
-// 2. 允許空白可以放棋 [v]
-// 3. 根據規則移動、根據邏輯取決需不需要調整紀錄位置的資料結構
 // 4. 判斷可否移動的背景顏色可能需要重構程式碼(包含空位也可以選)
 
 // 可能要在這一層render 不同的棋子
@@ -97,10 +97,14 @@ function DroppableCell(props) {
 }
 
 function Board() {
-  // 在這一層會設定棋子的初始 x, y 軸 (從 game 傳進來)、然後帶入後面的chess 判斷、結合這兩個變數
   const [shuffledChess, setShuffledChess] = useState([]);
 
   const [eventInfo, setEventInfo] = useState('<>');
+
+  // TODO: 紀錄誰是哪個顏色
+  const [side, setSide] = useState();
+  // TODO: 紀錄順序
+  const [sequence, setSequence] = useState();
 
   useEffect(() => {
       // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
@@ -108,8 +112,17 @@ function Board() {
       setShuffledChess(randomChess);
    }, []); 
 
+  const rules = useMemo(() => new ChessRules(), []);
+
+  function emitChange(activeData, overData){
+    const updatedChess = [...shuffledChess];
+    updatedChess[activeData.position] = '.';
+    updatedChess[overData.position] = activeData.chess;
+    setShuffledChess(updatedChess);
+    setEventInfo(`${String(event?.active?.id) ?? ''} -> ${String(event?.over?.id) ?? ''}`);
+  }
+
   function handleDragEnd(event) {
-    // TODO: 要能允許移動去空位
     let activeEvent = event.active;
     let overEvent = event.over;
 
@@ -119,39 +132,56 @@ function Board() {
 
     let activeData = activeEvent.data.current;
     let overData = overEvent.data.current;
-
-    console.log(activeData)
-    console.log(overData)
-
-    if (activeData.position == overData.position) {
-      // moving to same place
+    
+    if(rules.isMoveSamePlace(activeData, overData)){
       setEventInfo('<>');
       return;
     }
 
-    if (overData.chess === "." && (activeData.position !== overData.position)) {
+    // 暫時寫的判斷移動到空位
+    if (rules.isMoveToEmptyPlace(activeData, overData)) {
       // moving to another empty place
-      shuffledChess[overData.position] = activeData.chess;
-      shuffledChess[activeData.position] = '.';
-      setEventInfo(`${String(event?.active?.id) ?? ''} -> ${String(event?.over?.id) ?? ''}`);
+      emitChange(activeData, overData)
       return;
     }
 
-    if (activeData.chess.sn[0] == overData.chess.sn[0]) {
+    // 同個棋子不能吃
+    if (rules.isSameSide(activeData, overData)) {
       setEventInfo('same side');
       return;
     }
 
-    setEventInfo(`${String(event?.active?.id) ?? ''} -> ${String(event?.over?.id) ?? ''}`);
-    shuffledChess[activeData.position] = '.';
-
-    if (overData) {
-      shuffledChess[overData.position] = activeData.chess;
+    if (!rules.isTurned(overData)){
+      setEventInfo('the chess hasn\' be turned');
+      // return;
     }
+
+    if (rules.isCannonCanCommit(activeData, overData)){
+        // x axis: abs(over.position - current.position) === 2
+        // y axis: abs(over.position - current.position) === 16
+        emitChange(activeData, overData)
+    }
+    // Except cannon, other chess can not move over 1 step.
+    if (rules.isOverStep(activeData, overData)){
+      setEventInfo('Chess can not move over 1 step');
+    }
+
+    if(rules.isSolderCanCommit(activeData, overData)){
+      emitChange(activeData, overData)
+    }
+
+    if(rules.isKingCanCommit(activeData, overData)){
+      emitChange(activeData, overData)
+    }
+
+    if(rules.canCommit(activeData, overData)){
+      emitChange(activeData, overData)
+    }
+
   }
     return (
       <>
-      {/* {eventInfo} */}
+      {/* TODO: {eventInfo} */}
       <DndContext onDragEnd={handleDragEnd}>
       <div className="w-full h-full grid grid-cols-8">
         {shuffledChess.map((chess, index) => {
@@ -161,7 +191,6 @@ function Board() {
             <DroppableCell key={index} position={index} chess={chess}>
               {/* <div key={index} className="relative w-full h-full border flex justify-center items-center" style={{ borderColor: "#3C3B3B" }}> */}
               {/* 棋子 */}
-              {/* TODO: Draggable */}
               {chess == '.' ? (
                   <div>{null}</div>
               ) : (
@@ -181,7 +210,6 @@ function Board() {
 }
 
 function GameSection({}){
-
   return (
 
     <div className="w-2/3 flex flex-col justify-center items-center">

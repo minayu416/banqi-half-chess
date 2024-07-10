@@ -35,6 +35,16 @@ const banqiGeneratePolicy = {
     }
 }
 
+const banqiWeight = {
+    "king": 9,
+    "advisor": 8,
+    "elephant": 7,
+    "chariot": 6,
+    "horse": 5,
+    "cannon": 4,
+    "soldier": 1
+}
+
 
 
 export const ChessGenerator = () => {
@@ -49,6 +59,7 @@ export const ChessGenerator = () => {
                     sn: `${sn}-${i}`,
                     color: color === 0 ? "#000000" : "#CC0000",
                     type: chess,
+                    weight: banqiWeight[chess],
                     chineseName: chessWordMapping[color][chess]
                 });
             }
@@ -75,10 +86,13 @@ export const ChessShuffleHandler = () => {
     let i = 0
     shuffleArray(banqiPool).forEach(chess => {
         shuffledChess.push({
-            position: i ++,
+            position: i++,
             sn: chess.sn,
+            // TODO: 先假設是翻開的。
+            turned: true,
             color: chess.color,
-            type: chess.chess,
+            type: chess.type,
+            weight: chess.weight,
             chineseName: chess.chineseName
         });
     })
