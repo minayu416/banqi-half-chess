@@ -156,26 +156,29 @@ function Board() {
       // return;
     }
 
+    // TODO: 可以隔很多格跳嗎？
     if (rules.isCannonCanCommit(activeData, overData)){
         // x axis: abs(over.position - current.position) === 2
         // y axis: abs(over.position - current.position) === 16
         emitChange(activeData, overData)
     }
+
     // Except cannon, other chess can not move over 1 step.
     if (rules.isOverStep(activeData, overData)){
       setEventInfo('Chess can not move over 1 step');
+      return;
     }
-
-    if(rules.isSolderCanCommit(activeData, overData)){
+    if (rules.isSolderCanCommit(activeData, overData)){
       emitChange(activeData, overData)
+      return;
     }
-
-    if(rules.isKingCanCommit(activeData, overData)){
-      emitChange(activeData, overData)
+    if (rules.isKingCanCommit(activeData, overData)){
+      setEventInfo('King can not eat solder');
+      return;
     }
-
-    if(rules.canCommit(activeData, overData)){
+    if (rules.canCommit(activeData, overData)){
       emitChange(activeData, overData)
+      return;
     }
 
   }
