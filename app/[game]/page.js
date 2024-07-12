@@ -166,6 +166,7 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
       return;
 
     }
+    console.log(overData)
 
     if (!rules.isTurned(overData)){
       setEventInfo('the chess hasn\' be turned');
@@ -225,6 +226,11 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
     }
     if (rules.canCommit(activeData, overData)){
       emitChange(activeData, overData)
+      return;
+    }
+
+    if (rules.canNotCommit(activeData, overData)){
+      setEventInfo(`[${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''} can not eat [${String(chessStyle[overData.chess.sn[0]].word) ?? ''}] ${String(overData.chess.chineseName) ?? ''}`);
       return;
     }
 
