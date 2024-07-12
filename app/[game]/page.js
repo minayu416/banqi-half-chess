@@ -167,6 +167,11 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
 
     }
 
+    if (!rules.isTurned(overData)){
+      setEventInfo('the chess hasn\' be turned');
+      return;
+    }
+
     // TODO: 你拿的不是自己的棋子 - 到時候單人模式跟雙人模式的邏輯要分開
     if(activeData.chess.sn[0] !== side[sequence]){
       setEventInfo('You took incorrect side chess.');
@@ -190,11 +195,6 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
     if (rules.isSameSide(activeData, overData)) {
       setEventInfo('You can not eat same color chess');
       return;
-    }
-
-    if (!rules.isTurned(overData)){
-      setEventInfo('the chess hasn\' be turned');
-      // return;
     }
 
     // TODO: 可以隔很多格跳嗎？
@@ -302,8 +302,8 @@ function GameSection({setEventInfo}){
     <div className="w-2/3 flex flex-col justify-center items-center">
 
     <div className={`m-auto w-2/4 border border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
-      <div className='px-2'>照片</div>
-      <div className='px-5'>{opponent}</div>
+      <div className='p-5'>照片</div>
+      <div className='p-5'>{opponent}</div>
       <div className='py-2 m-auto'>
         {side[opponent] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
