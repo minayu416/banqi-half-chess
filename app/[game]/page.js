@@ -168,9 +168,6 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
 
     }
 
-    console.log(activeData)
-    console.log(overData)
-
     // TODO: 你拿的不是自己的棋子 - 到時候單人模式跟雙人模式的邏輯要分開
     if(activeData.chess.sn[0] !== side[sequence]){
       setEventInfo('You took incorrect side chess.');
