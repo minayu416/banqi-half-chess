@@ -125,11 +125,12 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
 
   function emitChange(activeData, overData){
     const updatedChess = [...shuffledChess];
+    const msg = overData.chess === '.' ? `Moved [${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''} to empty place` : `[${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''} -> [${String(chessStyle[overData.chess.sn[0]].word) ?? ''}] ${String(overData.chess.chineseName) ?? ''}`
     updatedChess[activeData.position] = '.';
     updatedChess[overData.position] = activeData.chess;
     setShuffledChess(updatedChess);
     changeSequence(currentUser);
-    setEventInfo(`[${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''} -> [${String(chessStyle[overData.chess.sn[0]].word) ?? ''}] ${String(overData.chess.chineseName) ?? ''}`);
+    setEventInfo(msg);
   }
 
   function handleDragEnd(event) {
@@ -166,12 +167,6 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
       return;
 
     }
-    console.log(overData)
-
-    if (!rules.isTurned(overData)){
-      setEventInfo('the chess hasn\' be turned');
-      return;
-    }
 
     // TODO: 你拿的不是自己的棋子 - 到時候單人模式跟雙人模式的邏輯要分開
     if(activeData.chess.sn[0] !== side[sequence]){
@@ -179,17 +174,28 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
       return;
     }
 
+    if (overData.chess !== '.'){
+      if (!overData.chess.turned){
+        setEventInfo('the chess hasn\'t be turned');
+        return;
+      }
+    }
+
     if(rules.isMoveSamePlace(activeData, overData)){
       setEventInfo('<>');
       return;
     }
 
-    // 暫時寫的判斷移動到空位
-    if (rules.isMoveToEmptyPlace(activeData, overData)) {
-      // moving to another empty place
-      emitChange(activeData, overData)
-      setEventInfo('Moved chess to empty place');
-      return;
+    // TODO: 暫時寫的判斷移動到空位
+    if (rules.isMoveToEmptyPlace(overData)) {
+        // moving to another empty place
+        if (Math.abs(overData.position - activeData.position) === 1 || Math.abs(overData.position - activeData.position) === 8){
+          emitChange(activeData, overData)
+          return;
+      } else {
+        setEventInfo('Can not jump over 1 step');
+        return;
+      }
     }
 
     // 同個棋子不能吃
@@ -201,12 +207,68 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
     // TODO: 可以隔很多格跳嗎？
     if (rules.isCannon(activeData)){
         // x axis: abs(over.position - current.position) === 2
-        // y axis: abs(over.position - current.position) === (16 or 24)
-        // 要判斷中間只能有一個格子
-        // && (Math.abs(overChess.position - currentChess.position) === 2 || Math.abs(overChess.position - currentChess.position) === 16)
-        if ((Math.abs(overData.position - activeData.position) === 2 || Math.abs(overData.position - activeData.position) === 16)){
+        if (Math.abs(overData.position - activeData.position) === 2){
+          let a = activeData.position
+          let b = overData.position
+          if (a > b) {
+            [a, b] = [b, a];
+          }
+          if (shuffledChess[b-1] !== ".") {
           emitChange(activeData, overData)
           return;
+          }
+          return;
+        }
+        if (Math.abs(overData.position - activeData.position) <= 7){
+          let a = activeData.position
+          let b = overData.position
+          if (a > b) {
+            [a, b] = [b, a];
+          }
+          const resultArray = [];
+          for (let i = a +1 ; i < b; i++) {
+            resultArray.push(i);
+          }
+          console.log(resultArray)
+          let empty = 0
+          for (let i = 0; i < resultArray.length; i++) {
+            console.log(shuffledChess[resultArray[i]])
+            if (shuffledChess[resultArray[i]] !== '.'){
+              empty++
+            }
+          }
+
+          if (empty === 1){
+            emitChange(activeData, overData)
+            return;
+          }
+          return;
+        }
+        // y axis: abs(over.position - current.position) === (16 or 24)
+        if (Math.abs(overData.position - activeData.position) === 16){
+          emitChange(activeData, overData)
+          return;
+        }
+        if (Math.abs(overData.position - activeData.position) === 24){
+          let a = activeData.position
+          let b = overData.position
+          if (a > b) {
+            [a, b] = [b, a];
+            const mid = a + (b - a) / 2;
+            const indexes =  [mid - 4, mid + 4];
+            let empty = 0
+            for (let i = 0; i < indexes.length; i++) {
+              if (shuffledChess[indexes[i]] !== '.'){
+                empty++
+              }
+            }
+            // 確保中間只有一個棋子
+            if (empty === 1){
+              emitChange(activeData, overData)
+              return;
+            }
+            return;
+          }
         }
         return;
     }
@@ -237,13 +299,11 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
   }
     return (
       <>
-      {/* TODO: {eventInfo} */}
       <DndContext onDragEnd={handleDragEnd}>
       <div className="w-full h-full grid grid-cols-8">
         {shuffledChess.map((chess, index) => {
           return (
           // 這是方格, 先暫時用index 給格子編號
-          // TODO: 邏輯要優化
             <DroppableCell key={index} position={index} chess={chess} currentUser={currentUser} sequence={sequence}>
               {/* <div key={index} className="relative w-full h-full border flex justify-center items-center" style={{ borderColor: "#3C3B3B" }}> */}
               {/* 棋子 */}
@@ -266,7 +326,6 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
 }
 
 function GameSection({setEventInfo}){
-    // TODO: 紀錄誰是哪個顏色、應該只需要用第一次
     const [side, setSide] = useState({});
     // TODO: 紀錄順序, TODO: 不能寫死，先攻是Game creator
     // TODO: 動完每一步都要更新sequence 同步到資料庫
