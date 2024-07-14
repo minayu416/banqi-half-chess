@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+
 import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
 
 import { chessStyle, ChessShuffleHandler } from "./component"
@@ -325,7 +327,7 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
     )
 }
 
-function GameSection({setEventInfo}){
+function GameSection({setEventInfo, gameId}){
     const [side, setSide] = useState({});
     // TODO: 紀錄順序, TODO: 不能寫死，先攻是Game creator
     // TODO: 動完每一步都要更新sequence 同步到資料庫
@@ -336,6 +338,22 @@ function GameSection({setEventInfo}){
     const [opponent, setOpponent] = useState("")
   
     useEffect(() => {
+      if (gameId==="single"){
+        const me = "@user22336"
+        const opponentSide = "@robot18732"
+        setCurrentUser(me)
+        setOpponent(opponentSide)
+        setSequence(me);
+        let newSide = {
+          [me]: null,
+          [opponentSide]: null
+        }
+        setSide(newSide);
+      } else {
+      
+        // TODO: if game creator !== currentUser
+      const auth = getAuth()
+      console.log(auth)
       // 模擬線上串流、使用者加入的情況
       // TODO: 跟網路資料庫串流、記得確認固定使用者、確認刷新時不會跑掉
       // TODO: 先加入先翻
@@ -351,6 +369,7 @@ function GameSection({setEventInfo}){
         [opponentSide]: null
       }
       setSide(newSide);
+      }
    }, []); 
 
   function changeSequence(){
@@ -425,12 +444,14 @@ export default function Page({ params }) {
 
   const [eventInfo, setEventInfo] = useState('<>');
 
-    return (
+  return (
       <>
         <Header/>
         <div className="min-h-screen py-24 px-12 flex w-full">
-          <GameSection setEventInfo={setEventInfo}/>
-          <ChatRoom eventInfo={eventInfo}/>
+          <GameSection setEventInfo={setEventInfo} gameId={params.game}/>
+          { params.game === "single" ? null :
+            <ChatRoom eventInfo={eventInfo}/>
+          }
         </div>
       </>
       )
