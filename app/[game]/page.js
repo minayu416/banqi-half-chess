@@ -421,6 +421,7 @@ function ChatRoom({eventInfo}){
 }
 
 export default function Page({ params }) {
+  // TODO: singleMode 導向另一個地方、取消ChatRoom，某些函式可以抽出來共用
 
   const [eventInfo, setEventInfo] = useState('<>');
 
