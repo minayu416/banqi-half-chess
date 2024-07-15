@@ -2,30 +2,12 @@
 
 import { useRouter } from "next/navigation";
 
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, signInWithGoogle, SignOut } from "./firebase";
 
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 import { Header, generateRandomCode } from "./component";
 import { useState } from "react";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyA8_NLNJW8mZLaNfnpqO4I9i9Q08IuVnfA",
-  authDomain: "banqi-half-chess.firebaseapp.com",
-  projectId: "banqi-half-chess",
-  storageBucket: "banqi-half-chess.appspot.com",
-  messagingSenderId: "666331770434",
-  appId: "1:666331770434:web:b8e1df7f15923a346e87db",
-  measurementId: "G-FCBJWRHZJL"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-// const analytics = getAnalytics(app);
 
 
 function LoginInfo({user}){
@@ -49,15 +31,6 @@ function LoginInfo({user}){
   )
 }
 
-function SignOut() {
-  return auth.currentUser && ( <>
-
-      <button className="mr-2 ml-6 rounded-md text-sm font-bold" onClick={() => auth.signOut()}>登出</button>
-
-    </>
-  )
-}
-
 export default function Home() {
 
   const router = useRouter();
@@ -65,6 +38,9 @@ export default function Home() {
   const [user] = useAuthState(auth);
 
   const [multiPlayerMode, setMultiPlayerMode] = useState(false)
+  const [isJoinGame, setIsJoinGame] = useState(false)
+
+  const [formValue, setFormValue] = useState('');
 
   const fontStyle = {
     color: "#96602E"
@@ -81,11 +57,15 @@ export default function Home() {
     }
   };
 
-  const joinGame = () => {
+  const joinGame = (event) => {
+    event.preventDefault();
     if (user){
-      const randomCode = generateRandomCode();
-      router.push(`/${randomCode}/`);
+      router.push(`/${formValue}/`);
     }
+  };
+
+  const inVokeJoinGame = () => {
+    setIsJoinGame(true);
   };
 
   const back = () => {
@@ -99,24 +79,6 @@ export default function Home() {
   const newSingleGame = () => {
     router.push(`/single/`);
   };
-
-  const signInWithGoogle = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-    .then((result) => {
-      // console.log(result)
-      // const credential = GoogleAuthProvider.credentialFromResult(result);
-      // const token = credential.accessToken;
-      // const user = result.user;
-    }).catch((error) => {
-      // const errorCode = error.code;
-      // const errorMessage = error.message;
-      // const email = error.email;
-      // const credential = GoogleAuthProvider.credentialFromError(error);
-      console.log(error)
-    });
-  }
-
 
   return (
     <main className="">
@@ -140,13 +102,26 @@ export default function Home() {
         </button>
         }
 
-        {/* TODO: 要先登入才給按 */}
+        {isJoinGame ? <>
+          <form onSubmit={joinGame} className='rounded-lg flex flex-col justify-center items-center'>
+
+          <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="Enter game code." className="p-2 my-3 placeholder:text-gray-400 text-sm border rounded-lg font-bold" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}} />
+
+          <button type="submit" disabled={!formValue} className={`w-full rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+            <p className="text-xl font-bold text-center" style={fontLockStyle}>加入</p>
+          </button>
+
+          </form>
+        </> :
+        <>
         <button onClick={() => newGame()} className={`w-2/5 rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
           <p className="text-xl font-bold text-center" style={fontLockStyle}>新遊戲</p>
         </button>
-        <button onClick={() => joinGame()} className={`w-2/5 rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+        <button onClick={() => inVokeJoinGame()} className={`w-2/5 rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
           <p className="text-xl font-bold text-center" style={fontLockStyle}>加入遊戲</p>
         </button>
+        </>
+        }
         <button onClick={() => back()} className="w-2/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
           <p className="text-xl font-bold text-center" style={fontStyle}>返回</p>
         </button>

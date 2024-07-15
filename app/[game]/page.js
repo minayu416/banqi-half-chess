@@ -339,6 +339,7 @@ function GameSection({setEventInfo, gameId}){
   
     useEffect(() => {
       if (gameId==="single"){
+        // TODO: single 就存在localStorage
         const me = "@user22336"
         const opponentSide = "@robot18732"
         setCurrentUser(me)
@@ -350,10 +351,13 @@ function GameSection({setEventInfo, gameId}){
         }
         setSide(newSide);
       } else {
-      
-        // TODO: if game creator !== currentUser
+
+      // TODO: if game creator !== currentUser
       const auth = getAuth()
+      const { uid, displayName, photoURL } = auth.currentUser;
       console.log(auth)
+      // TODO: setCurrentUser(me)
+      // TODO: 先去翻 gameId、如果有資料 就是加入、沒有就創一筆新資料
       // 模擬線上串流、使用者加入的情況
       // TODO: 跟網路資料庫串流、記得確認固定使用者、確認刷新時不會跑掉
       // TODO: 先加入先翻
