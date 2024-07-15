@@ -21,63 +21,68 @@ export const db = getFirestore(app);
 const gameRef = collection(db, "games");
 export const auth = getAuth(app);
 
+export const updatePosition = async (gameId, position, eventMessage) => {
+  const docRef = collection(db, `games/${gameId}/position`);
+  await addDoc(docRef, {
+    position: position,
+    eventMessage: eventMessage,
+      createdAt: serverTimestamp(),
+    });
+}
 
-function writeSendMessage(userId, name, text, imageUrl) {
-    const messagesCollectionRef = collection(db, "messages")
-    addDoc (messagesCollectionRef, 
-      {
-        userId: userId,
-        displayName: name,
-        text: text,
-        createdAt: serverTimestamp(),
-        photoURL : imageUrl
-      }
-      );
-      console.log(serverTimestamp())
-  }
-  
-function getMessages(callback) {
-    return onSnapshot(
-        query(
-            collection(db, 'messages'),
-            orderBy('createdAt', 'desc'), limit(20)
-        ),
-        (querySnapshot) => {
-            const messages = querySnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-            callback(messages);
-        }
-    );
-  }
-  
-function useMessages(){
-    const [messages, setMessages] = useState([]);
-  
-    useEffect(() => {
-        const unsubscribe = getMessages(setMessages);
-        return unsubscribe;
-    }, []);
-  
-    return messages;
-  }
+export const fetchLatestPosition = (gameId, callback) => {
+  console.log(123)
+  const positionCollectionRef = collection(db, `games/${gameId}/position`);
+  const positionQuery = query(positionCollectionRef, orderBy('createdAt', 'desc'), limit(1));
+
+  const unsubscribe = onSnapshot(positionQuery, (querySnapshot) => {
+    if (!querySnapshot.empty) {
+      const latestDoc = querySnapshot.docs[0];
+      const data = latestDoc.data();
+      callback(data);
+    }
+  });
+
+  return unsubscribe;
+};
+
+export const updateSide = async (gameId, side) => {
+  const docRef = doc(db, "games", gameId);
+  await updateDoc(docRef, {
+      side: side
+    });
+}
+
+export const updateSequence = async (gameId, sequence) => {
+  const docRef = doc(db, "games", gameId);
+  await updateDoc(docRef, {
+    sequence: sequence
+    });
+}
 
 export const createOrJoinGame = async (gameId, user) => {
   const docRef = doc(db, "games", gameId);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    // TODO: 避免刷新
     console.log("Existing gameId", docSnap.data());
+    // 代表是刷新的
+    if (docSnap.data().opponent){
+
+      return {"gameCreator": docSnap.data().creator, 
+      "gameOpponent": docSnap.data().opponent,
+      "gameSequence": docSnap.data().sequence
+    }
+
+    } else {
     const exixtingGameRef = doc(db, "games", gameId);
     await updateDoc(exixtingGameRef, {
       opponent: {"uid": user.uid, "displayName": user.displayName}
     });
     return {"gameCreator": docSnap.data().creator, 
             "gameOpponent": {"uid": user.uid, "displayName": user.displayName}, 
-            "gameSequence": docSnap.data().creator}
-
+            "gameSequence": docSnap.data().creator.uid}
+    }
   } else {
     // docSnap.data() will be undefined in this case
     console.log("No this gameId");
@@ -87,7 +92,7 @@ export const createOrJoinGame = async (gameId, user) => {
       // opponent: null, 
       sequence: user.uid,
     });
-    return {"gameCreator": user, "gameOpponent": {"uid": null, "displayName": null}, "gameSequence": user}
+    return {"gameCreator": user, "gameOpponent": {"uid": null, "displayName": null}, "gameSequence": user.uid}
   }
 }
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 
-import { auth, db, createOrJoinGame } from '../firebase'
+import { auth, db, createOrJoinGame, updateSide, updateSequence, updatePosition, fetchLatestPosition } from '../firebase'
 
 import { doc, onSnapshot } from "firebase/firestore"
 
@@ -100,7 +100,7 @@ function DroppableCell(props) {
 
 }
 
-function Board({currentUser, opponent, side, setSide, sequence, changeSequence, setEventInfo}) {
+function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSequence, setEventInfo }) {
   const [shuffledChess, setShuffledChess] = useState([]);
 
   // const [eventInfo, setEventInfo] = useState('<>');
@@ -109,7 +109,18 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
       // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
       const randomChess = ChessShuffleHandler();
       setShuffledChess(randomChess);
-   }, []); 
+
+      if (gameId !== "single"){
+        const unsubscribe = fetchLatestPosition(gameId, (latestData) => {
+          console.log('Latest position data:', latestData);
+          setShuffledChess(latestData.position)
+          setEventInfo(latestData.eventMessage)
+        });
+  
+        return () => unsubscribe();
+      }
+
+   }, [gameId]); 
 
   const rules = useMemo(() => new ChessRules(), []);
 
@@ -121,6 +132,9 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
     setShuffledChess(updatedChess);
     changeSequence(currentUser.uid);
     setEventInfo(msg);
+    if (gameId !== "single") {
+      updatePosition(gameId, updatedChess, msg);
+    }
   }
 
   function handleDragEnd(event) {
@@ -134,31 +148,38 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
     let activeData = activeEvent.data.current;
     let overData = overEvent.data.current;
 
+    if (currentUser.uid !== sequence){
+      setEventInfo("This is not your turn");
+      return;
+    }
+
     if (!activeData.chess.turned){
       const updatedChess = [...shuffledChess];
       const turnedChess = {...activeData.chess}
       turnedChess.turned = true;
       updatedChess[activeData.position] = turnedChess;
+      const msg = `Turned on [${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''}`
       setShuffledChess(updatedChess);
       changeSequence(currentUser.uid);
-      setEventInfo(`Turned on [${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''}`);
+      // setEventInfo(`Turned on [${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''}`);
+      setEventInfo(msg);
 
-      if (side[currentUser.uid] === null){
-        let newSide = {...side}
-        newSide[currentUser.uid] = activeData.chess.sn[0];
-        const opponentSide = activeData.chess.sn[0] === "b" ? "r" : "b"
-        newSide[opponent.uid] = opponentSide;
+      if (gameId !== "single") {
+        updatePosition(gameId, updatedChess, msg);
+      }
+
+      if (side === null){
+        let newSide = {
+          [currentUser.uid]: activeData.chess.sn[0],
+          [opponent.uid]: activeData.chess.sn[0] === "b" ? "r" : "b"
+        }
+
         setSide(newSide)
-        changeSequence(currentUser.uid);
         setEventInfo('先攻方選定顏色');
 
-              
-      // let newSide = {
-      //   [me.uid]: null,
-      //   [opponentSide.uid]: null
-      // }
-      // setSide(newSide);
-        // TODO: 存在雲端資料庫
+        updateSide(gameId, newSide)
+        changeSequence(currentUser.uid);
+
         return;
       }
       return;
@@ -323,12 +344,10 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
 }
 
 function GameSection({setEventInfo, gameId}){
-    const [side, setSide] = useState({});
-    // TODO: 紀錄順序, TODO: 不能寫死，先攻是Game creator
+    const [side, setSide] = useState(null);
     // TODO: 動完每一步都要更新sequence 同步到資料庫
     const [sequence, setSequence] = useState(null);
 
-    // TODO: 判斷當前使用者是誰、只存在客戶端做為辨別
     const [currentUser, setCurrentUser] = useState({});
     const [opponent, setOpponent] = useState({})
   
@@ -351,14 +370,13 @@ function GameSection({setEventInfo, gameId}){
 
       const fetchGameData = async () => {
         const { gameCreator, gameOpponent, gameSequence } = await createOrJoinGame(gameId, auth.currentUser);
-
-        if (gameOpponent.uid){
-          setOpponent(gameCreator)
-        } else {
+        if (auth.currentUser.uid === gameCreator.uid){
           setOpponent(gameOpponent)
+        } else {
+          setOpponent(gameCreator)
         }
   
-        setSequence(gameSequence.uid);
+        setSequence(gameSequence);
       
       }
       fetchGameData();
@@ -368,8 +386,17 @@ function GameSection({setEventInfo, gameId}){
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.opponent){
-            setOpponent(docSnap.data().opponent);
+            if (auth.currentUser.uid === data.creator.uid){
+              setOpponent(docSnap.data().opponent);
+            } else {
+              setOpponent(docSnap.data().creator);
+            }
+            
+          } 
+          if (data.side){
+            setSide(data.side)
           }
+          setSequence(data.sequence)
         }
       });
 
@@ -381,9 +408,14 @@ function GameSection({setEventInfo, gameId}){
   function changeSequence(){
       if (currentUser === sequence){
         setSequence(opponent.uid)
-        // TODO: 存 Firestore
+        if (gameId !== "single"){
+          updateSequence(gameId, opponent.uid)
+        }
       } else {
         setSequence(currentUser.uid)
+        if (gameId !== "single"){
+          updateSequence(gameId, currentUser.uid)
+        }
       }
   }
  
@@ -395,7 +427,7 @@ function GameSection({setEventInfo, gameId}){
       <div className='p-5'>照片</div>
       <div className='p-5'>{opponent.displayName}</div>
       <div className='py-2 m-auto'>
-        {side[opponent.uid] &&
+        {side && side[opponent.uid] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
         <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[opponent.uid]].color }}>
           <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[opponent.uid]].color }}>{ chessStyle[side[opponent.uid]].king }
@@ -410,7 +442,7 @@ function GameSection({setEventInfo, gameId}){
         <div className="h-3/5 w-full border rounded-md p-3" style={{backgroundColor: "#96602E", borderColor: "#C18859"}}>
             <div className="w-full h-full border-2 rounded-md" style={{borderColor: "#3C3B3B"}}>
               {opponent.uid &&
-                <Board currentUser={currentUser} opponent={opponent} side={side} setSide={setSide} sequence={sequence} changeSequence={changeSequence} setEventInfo={setEventInfo}/>
+                <Board gameId={gameId} currentUser={currentUser} opponent={opponent} side={side} setSide={setSide} sequence={sequence} changeSequence={changeSequence} setEventInfo={setEventInfo} />
               }
               </div>
         </div>
@@ -418,7 +450,7 @@ function GameSection({setEventInfo, gameId}){
       <div className='p-5'>照片</div>
       <div className='p-5'>{currentUser.displayName}</div>
       <div className='p-1 m-auto'>
-      {side[currentUser.uid] &&
+      {side && side[currentUser.uid] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
         <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[currentUser.uid]].color }}>
           <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[currentUser.uid]].color }}>{ chessStyle[side[currentUser.uid]].king }
