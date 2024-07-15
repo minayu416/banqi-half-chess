@@ -4,7 +4,7 @@ import { getAnalytics } from "firebase/analytics";
 
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
-import { collection, getDocs, addDoc, query, orderBy, limit, getFirestore, onSnapshot, serverTimestamp } from "firebase/firestore"
+import { collection, doc, getDoc, getDocs, updateDoc, addDoc, setDoc, query, orderBy, limit, getFirestore, onSnapshot, serverTimestamp } from "firebase/firestore"
 
 const firebaseConfig = {
     apiKey: "AIzaSyA8_NLNJW8mZLaNfnpqO4I9i9Q08IuVnfA",
@@ -17,7 +17,8 @@ const firebaseConfig = {
   };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+export const db = getFirestore(app);
+const gameRef = collection(db, "games");
 export const auth = getAuth(app);
 
 
@@ -62,6 +63,33 @@ function useMessages(){
     return messages;
   }
 
+export const createOrJoinGame = async (gameId, user) => {
+  const docRef = doc(db, "games", gameId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    // TODO: 避免刷新
+    console.log("Existing gameId", docSnap.data());
+    const exixtingGameRef = doc(db, "games", gameId);
+    await updateDoc(exixtingGameRef, {
+      opponent: {"uid": user.uid, "displayName": user.displayName}
+    });
+    return {"gameCreator": docSnap.data().creator, 
+            "gameOpponent": {"uid": user.uid, "displayName": user.displayName}, 
+            "gameSequence": docSnap.data().creator}
+
+  } else {
+    // docSnap.data() will be undefined in this case
+    console.log("No this gameId");
+  
+    await setDoc(doc(gameRef, gameId), {
+      creator: {"uid": user.uid, "displayName": user.displayName}, 
+      // opponent: null, 
+      sequence: user.uid,
+    });
+    return {"gameCreator": user, "gameOpponent": {"uid": null, "displayName": null}, "gameSequence": user}
+  }
+}
 
 export const signInWithGoogle = () => {
     const provider = new GoogleAuthProvider();

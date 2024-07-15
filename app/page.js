@@ -69,7 +69,12 @@ export default function Home() {
   };
 
   const back = () => {
+    if (isJoinGame){
+      setIsJoinGame(false)
+      setMultiPlayerMode(true)
+    } else {
     setMultiPlayerMode(false)
+    }
   };
 
   const multiGame = () => {
@@ -112,6 +117,9 @@ export default function Home() {
           </button>
 
           </form>
+          <button onClick={() => back()} className="w-2/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+          <p className="text-xl font-bold text-center" style={fontStyle}>返回</p>
+        </button>
         </> :
         <>
         <button onClick={() => newGame()} className={`w-2/5 rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
@@ -120,11 +128,11 @@ export default function Home() {
         <button onClick={() => inVokeJoinGame()} className={`w-2/5 rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
           <p className="text-xl font-bold text-center" style={fontLockStyle}>加入遊戲</p>
         </button>
-        </>
-        }
         <button onClick={() => back()} className="w-2/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
           <p className="text-xl font-bold text-center" style={fontStyle}>返回</p>
         </button>
+        </>
+        }
         </>
         : 
         <>

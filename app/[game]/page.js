@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import { auth, db, createOrJoinGame } from '../firebase'
+
+import { doc, onSnapshot } from "firebase/firestore"
 
 import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
 
@@ -13,20 +15,6 @@ import { ChessRules } from './rules';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFlag } from '@fortawesome/free-solid-svg-icons'
-
-// TODO: Note: 必須要登入Google 帳號才能授權把資料即時更新到google/firestore
-
-// TODO: 先確定可以單機動，再考慮上網連動 (注意不要把 firestore 打爆)
-// TODO: Logic: 1. (要特別亮目前是誰的side) 設計翻牌邏輯，第一個翻牌的人鎖定那方是哪個顏色，要注意持續翻牌不等於有顏色，
-//                 但要紀錄哪一方翻到哪個顏色，並且可以操控他的顏色。還要紀錄交互操作，一人動一次。 
-//              2. 要紀錄棋盤的位置 + 棋子，然後寫規則
-//              2.2. 要寫一下怎麼計算棋盤位置的數字
-//              3. 紀錄選擇的選定，然後移動的時候判斷邏輯跟transition
-//              4. 注意的是隨機的棋子最後是蓋牌，不能存在客戶端被看到 (但這之後再處理，可能要random後直接存在後端或者firestore)
-
-// TODO:
-// 1. 重構一下儲存跟傳遞的Params
-// 4. 判斷可否移動的背景顏色可能需要重構程式碼(包含空位也可以選)
 
 // 可能要在這一層render 不同的棋子
 function Draggable(props) {
@@ -131,7 +119,7 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
     updatedChess[activeData.position] = '.';
     updatedChess[overData.position] = activeData.chess;
     setShuffledChess(updatedChess);
-    changeSequence(currentUser);
+    changeSequence(currentUser.uid);
     setEventInfo(msg);
   }
 
@@ -152,17 +140,24 @@ function Board({currentUser, opponent, side, setSide, sequence, changeSequence, 
       turnedChess.turned = true;
       updatedChess[activeData.position] = turnedChess;
       setShuffledChess(updatedChess);
-      changeSequence(currentUser);
+      changeSequence(currentUser.uid);
       setEventInfo(`Turned on [${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''}`);
 
-      if (side[currentUser] === null){
+      if (side[currentUser.uid] === null){
         let newSide = {...side}
-        newSide[currentUser] = activeData.chess.sn[0];
+        newSide[currentUser.uid] = activeData.chess.sn[0];
         const opponentSide = activeData.chess.sn[0] === "b" ? "r" : "b"
-        newSide[opponent] = opponentSide;
+        newSide[opponent.uid] = opponentSide;
         setSide(newSide)
-        changeSequence(currentUser);
+        changeSequence(currentUser.uid);
         setEventInfo('先攻方選定顏色');
+
+              
+      // let newSide = {
+      //   [me.uid]: null,
+      //   [opponentSide.uid]: null
+      // }
+      // setSide(newSide);
         // TODO: 存在雲端資料庫
         return;
       }
@@ -334,14 +329,14 @@ function GameSection({setEventInfo, gameId}){
     const [sequence, setSequence] = useState(null);
 
     // TODO: 判斷當前使用者是誰、只存在客戶端做為辨別
-    const [currentUser, setCurrentUser] = useState("");
-    const [opponent, setOpponent] = useState("")
+    const [currentUser, setCurrentUser] = useState({});
+    const [opponent, setOpponent] = useState({})
   
     useEffect(() => {
       if (gameId==="single"){
         // TODO: single 就存在localStorage
-        const me = "@user22336"
-        const opponentSide = "@robot18732"
+        const me = {"uid": "@user22336", "displayName": "Me"}
+        const opponentSide = {"uid": "@robot18732", "displayName": "Robot"} 
         setCurrentUser(me)
         setOpponent(opponentSide)
         setSequence(me);
@@ -351,37 +346,44 @@ function GameSection({setEventInfo, gameId}){
         }
         setSide(newSide);
       } else {
+      // currentUser or opponent -> {"uid": "", "displayName": ""}
+      setCurrentUser(auth.currentUser)
 
-      // TODO: if game creator !== currentUser
-      const auth = getAuth()
-      const { uid, displayName, photoURL } = auth.currentUser;
-      console.log(auth)
-      // TODO: setCurrentUser(me)
-      // TODO: 先去翻 gameId、如果有資料 就是加入、沒有就創一筆新資料
-      // 模擬線上串流、使用者加入的情況
-      // TODO: 跟網路資料庫串流、記得確認固定使用者、確認刷新時不會跑掉
-      // TODO: 先加入先翻
-      const me = "@mina22336"
-      const creator = me
-      const opponentSide = "@robot18732"
-      setCurrentUser(me)
-      setOpponent(opponentSide)
-      setSequence(creator);
+      const fetchGameData = async () => {
+        const { gameCreator, gameOpponent, gameSequence } = await createOrJoinGame(gameId, auth.currentUser);
+
+        if (gameOpponent.uid){
+          setOpponent(gameCreator)
+        } else {
+          setOpponent(gameOpponent)
+        }
+  
+        setSequence(gameSequence.uid);
       
-      let newSide = {
-        [me]: null,
-        [opponentSide]: null
       }
-      setSide(newSide);
+      fetchGameData();
+
+      const docRef = doc(db, "games", gameId);
+      const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.opponent){
+            setOpponent(docSnap.data().opponent);
+          }
+        }
+      });
+
+      return () => unsubscribe();
+
       }
-   }, []); 
+   }, [gameId]); 
 
   function changeSequence(){
       if (currentUser === sequence){
-        setSequence(opponent)
+        setSequence(opponent.uid)
         // TODO: 存 Firestore
       } else {
-        setSequence(currentUser)
+        setSequence(currentUser.uid)
       }
   }
  
@@ -391,39 +393,41 @@ function GameSection({setEventInfo, gameId}){
 
     <div className={`m-auto w-2/4 border border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
       <div className='p-5'>照片</div>
-      <div className='p-5'>{opponent}</div>
+      <div className='p-5'>{opponent.displayName}</div>
       <div className='py-2 m-auto'>
-        {side[opponent] &&
+        {side[opponent.uid] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
-        <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[opponent]].color }}>
-          <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[opponent]].color }}>{ chessStyle[side[opponent]].king }
+        <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[opponent.uid]].color }}>
+          <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[opponent.uid]].color }}>{ chessStyle[side[opponent.uid]].king }
           </p>
         </div>
       </div>
       }
         </div>
-      <div>{ currentUser !== sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }</div>
+      <div>{ currentUser.uid !== sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }</div>
       </div>
       {/* TODO Banqi bg another option: #9C836A*/}
         <div className="h-3/5 w-full border rounded-md p-3" style={{backgroundColor: "#96602E", borderColor: "#C18859"}}>
             <div className="w-full h-full border-2 rounded-md" style={{borderColor: "#3C3B3B"}}>
-              <Board currentUser={currentUser} opponent={opponent} side={side} setSide={setSide} sequence={sequence} changeSequence={changeSequence} setEventInfo={setEventInfo}/>
-            </div>
+              {opponent.uid &&
+                <Board currentUser={currentUser} opponent={opponent} side={side} setSide={setSide} sequence={sequence} changeSequence={changeSequence} setEventInfo={setEventInfo}/>
+              }
+              </div>
         </div>
       <div className={`m-auto w-2/4 border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
       <div className='p-5'>照片</div>
-      <div className='p-5'>{currentUser}</div>
+      <div className='p-5'>{currentUser.displayName}</div>
       <div className='p-1 m-auto'>
-      {side[currentUser] &&
+      {side[currentUser.uid] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
-        <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[currentUser]].color }}>
-          <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[currentUser]].color }}>{ chessStyle[side[currentUser]].king }
+        <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[currentUser.uid]].color }}>
+          <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[currentUser.uid]].color }}>{ chessStyle[side[currentUser.uid]].king }
           </p>
         </div>
         </div>
       }
         </div>
-        <div>{ currentUser === sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }</div>
+        <div>{ currentUser.uid === sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }</div>
       
         </div>
       </div>
