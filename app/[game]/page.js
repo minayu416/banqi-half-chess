@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 
-import { auth, db, createOrJoinGame, updateSide, updateSequence, updatePosition, fetchLatestPosition } from '../firebase'
+import { auth, db, createOrJoinGame, updateSide, updateSequence, updatePosition, fetchLatestPosition, writeSendMessage, fetchNewMessages } from '../firebase'
 
 import { doc, onSnapshot } from "firebase/firestore"
 
@@ -105,6 +105,8 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
 
   // const [eventInfo, setEventInfo] = useState('<>');
 
+  console.log(sequence)
+
   useEffect(() => {
       // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
       const randomChess = ChessShuffleHandler();
@@ -112,7 +114,6 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
 
       if (gameId !== "single"){
         const unsubscribe = fetchLatestPosition(gameId, (latestData) => {
-          console.log('Latest position data:', latestData);
           setShuffledChess(latestData.position)
           setEventInfo(latestData.eventMessage)
         });
@@ -247,10 +248,10 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
           for (let i = a +1 ; i < b; i++) {
             resultArray.push(i);
           }
-          console.log(resultArray)
+
           let empty = 0
           for (let i = 0; i < resultArray.length; i++) {
-            console.log(shuffledChess[resultArray[i]])
+
             if (shuffledChess[resultArray[i]] !== '.'){
               empty++
             }
@@ -406,7 +407,7 @@ function GameSection({setEventInfo, gameId}){
    }, [gameId]); 
 
   function changeSequence(){
-      if (currentUser === sequence){
+      if (currentUser.uid === sequence){
         setSequence(opponent.uid)
         if (gameId !== "single"){
           updateSequence(gameId, opponent.uid)
@@ -424,7 +425,9 @@ function GameSection({setEventInfo, gameId}){
     <div className="w-2/3 flex flex-col justify-center items-center">
 
     <div className={`m-auto w-2/4 border border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
-      <div className='p-5'>照片</div>
+      <div className='pl-3 py-2 w-14 h-14'>
+      <img src={opponent.photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} class="rounded-xl" />
+      </div>
       <div className='p-5'>{opponent.displayName}</div>
       <div className='py-2 m-auto'>
         {side && side[opponent.uid] &&
@@ -447,7 +450,9 @@ function GameSection({setEventInfo, gameId}){
               </div>
         </div>
       <div className={`m-auto w-2/4 border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
-      <div className='p-5'>照片</div>
+      <div className='pl-3 py-2 w-14 h-14'>
+        <img src={currentUser.photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} class="rounded-xl" />
+      </div>
       <div className='p-5'>{currentUser.displayName}</div>
       <div className='p-1 m-auto'>
       {side && side[currentUser.uid] &&
@@ -467,14 +472,75 @@ function GameSection({setEventInfo, gameId}){
 
 }
 
-function ChatRoom({eventInfo}){
+function ChatMessage(props) {
+  const { userId, displayName, text, photoURL, createdAt } = props.message;
+  // console.log(auth.currentUser.uid)
+  const messageAlgn = userId === auth.currentUser.uid ? 'flex-row-reverse' : '';
+
+  let MessageTime = {}
+  if (createdAt == null){
+    MessageTime.time = ''
+  } else {
+    const date = new Date(createdAt.seconds * 1000)
+    MessageTime.time = ('0' + (date.getMonth()+1)).slice(-2) + "/" + ('0' + date.getDate()).slice(-2) +  " " + ('0' + (date.getHours())).slice(-2) + ":" + ('0' + (date.getMinutes())).slice(-2)
+  }
+
+  return (<>
+      <div className={`flex mb-1 ${messageAlgn}`}>
+        <div className={`h-10 w-10 ${auth.currentUser.uid===userId ? "ml-2" : "mr-2"}`}>
+        <img src={photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} className="rounded-full" />
+        </div>
+        <div className="py-1">
+        {/* <p class="text-xs font-voll">{displayName}</p> */}
+        <div className='border rounded-md mb-1' style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}}>
+          <p className={`text-md bg-color-03 rounded-md py-0.5 px-2 font-voll text-center`}>{text}</p>
+        </div>
+        <p className="text-xs font-roboto">{MessageTime.time}</p>
+        </div>
+    </div>
+  </>)
+}
+
+function ChatRoom({eventInfo, gameId}){
+  const dummy = useRef();
+
+  const [formValue, setFormValue] = useState('');
+  const { uid, displayName, photoURL } = auth.currentUser;
+  const [messages, setMessages] = useState([])
+
+  useEffect(() => {
+
+    if (gameId !== "single"){
+      const unsubscribe = fetchNewMessages(gameId, (latestData) => {
+        setMessages(latestData)
+      });
+
+      return () => unsubscribe();
+    }
+
+ }, [gameId]); 
+
+ const sendMessage = async (e) => {
+  e.preventDefault();
+  await writeSendMessage(gameId, uid, displayName, photoURL, formValue) 
+  setFormValue('');
+  dummy.current.scrollIntoView({ behavior: 'smooth' });
+} 
+
  return (
   <div className="w-1/3 flex flex-col justify-center items-center">
-    {eventInfo}
-  {/* TODO implement chat room, refer Fancy chat room */}
-  <div className="h-2/3 w-4/5 border rounded-md" style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
+  <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
+  <div className='flex flex-col h-3/4 w-4/5 relative border rounded-md' style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
+  <div className="h-full p-4">
+  
+  <span ref={dummy}></span>
+    {messages && messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
   </div>
-  {/* TODO chat message + button */}
+    <form onSubmit={sendMessage} className='flex w-full border-t absolute inset-x-0 bottom-0' style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+      <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="Type message..." className="ml-4 my-3 py-2 px-3 w-2/3 placeholder:text-gray-600 rounded-md text-black text-sm" />
+      <button type="submit" disabled={!formValue} class="m-auto px-3 py-2 rounded-lg text-xs font-bold border" style={{backgroundColor: "#FFFBF8", borderColor: "#B59376", color: "#96602E"}}>SEND</button>
+    </form>
+  </div>
   </div>
  )
 }
@@ -484,13 +550,15 @@ export default function Page({ params }) {
 
   const [eventInfo, setEventInfo] = useState('<>');
 
+  useEffect
+
   return (
       <>
         <Header/>
         <div className="min-h-screen py-24 px-12 flex w-full">
           <GameSection setEventInfo={setEventInfo} gameId={params.game}/>
           { params.game === "single" ? null :
-            <ChatRoom eventInfo={eventInfo}/>
+            <ChatRoom eventInfo={eventInfo} gameId={params.game}/>
           }
         </div>
       </>

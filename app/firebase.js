@@ -31,7 +31,6 @@ export const updatePosition = async (gameId, position, eventMessage) => {
 }
 
 export const fetchLatestPosition = (gameId, callback) => {
-  console.log(123)
   const positionCollectionRef = collection(db, `games/${gameId}/position`);
   const positionQuery = query(positionCollectionRef, orderBy('createdAt', 'desc'), limit(1));
 
@@ -65,7 +64,6 @@ export const createOrJoinGame = async (gameId, user) => {
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    console.log("Existing gameId", docSnap.data());
     // 代表是刷新的
     if (docSnap.data().opponent){
 
@@ -77,23 +75,52 @@ export const createOrJoinGame = async (gameId, user) => {
     } else {
     const exixtingGameRef = doc(db, "games", gameId);
     await updateDoc(exixtingGameRef, {
-      opponent: {"uid": user.uid, "displayName": user.displayName}
+      opponent: {"uid": user.uid, "displayName": user.displayName, "photoURL": user.photoURL}
     });
     return {"gameCreator": docSnap.data().creator, 
-            "gameOpponent": {"uid": user.uid, "displayName": user.displayName}, 
+            "gameOpponent": {"uid": user.uid, "displayName": user.displayName, "photoURL": user.photoURL}, 
             "gameSequence": docSnap.data().creator.uid}
     }
   } else {
     // docSnap.data() will be undefined in this case
-    console.log("No this gameId");
   
     await setDoc(doc(gameRef, gameId), {
-      creator: {"uid": user.uid, "displayName": user.displayName}, 
+      creator: {"uid": user.uid, "displayName": user.displayName, "photoURL": user.photoURL}, 
       // opponent: null, 
       sequence: user.uid,
     });
     return {"gameCreator": user, "gameOpponent": {"uid": null, "displayName": null}, "gameSequence": user.uid}
   }
+}
+
+export const fetchNewMessages = (gameId, callback) => {
+  const positionCollectionRef = collection(db, `games/${gameId}/messages`);
+  const positionQuery = query(positionCollectionRef, orderBy('createdAt', 'desc'), limit(10));
+
+  const unsubscribe = onSnapshot(positionQuery, (querySnapshot) => {
+    if (!querySnapshot.empty) {
+      const messages = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+    }));
+      callback(messages);
+    }
+  });
+
+  return unsubscribe;
+};
+
+export function writeSendMessage(gameId, userId, name, photoURL, text) {
+  const messagesCollectionRef = collection(db, `games/${gameId}/messages`);
+  addDoc (messagesCollectionRef, 
+    {
+      userId: userId,
+      displayName: name,
+      photoURL: photoURL,
+      text: text,
+      createdAt: serverTimestamp(),
+    }
+    );
 }
 
 export const signInWithGoogle = () => {
