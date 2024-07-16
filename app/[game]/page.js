@@ -102,10 +102,9 @@ function DroppableCell(props) {
 
 function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSequence, setEventInfo }) {
   const [shuffledChess, setShuffledChess] = useState([]);
-
+  const showUserSide = gameId === "single" ? currentUser.displayName : currentUser.uid
+  const showOpponentSide = gameId === "single" ? opponent.displayName : opponent.uid
   // const [eventInfo, setEventInfo] = useState('<>');
-
-  console.log(sequence)
 
   useEffect(() => {
       // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
@@ -149,9 +148,11 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
     let activeData = activeEvent.data.current;
     let overData = overEvent.data.current;
 
-    if (currentUser.uid !== sequence){
-      setEventInfo("This is not your turn");
-      return;
+    if (gameId !== "single"){
+      if (currentUser.uid !== sequence){
+        setEventInfo("This is not your turn");
+        return;
+      }
     }
 
     if (!activeData.chess.turned){
@@ -171,14 +172,16 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
 
       if (side === null){
         let newSide = {
-          [currentUser.uid]: activeData.chess.sn[0],
-          [opponent.uid]: activeData.chess.sn[0] === "b" ? "r" : "b"
+          [showUserSide]: activeData.chess.sn[0],
+          [showOpponentSide]: activeData.chess.sn[0] === "b" ? "r" : "b"
         }
 
         setSide(newSide)
         setEventInfo('先攻方選定顏色');
 
-        updateSide(gameId, newSide)
+        if (gameId !== "single"){
+          updateSide(gameId, newSide)
+        }
         changeSequence(currentUser.uid);
 
         return;
@@ -205,7 +208,6 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
       return;
     }
 
-    // TODO: 暫時寫的判斷移動到空位
     if (rules.isMoveToEmptyPlace(overData)) {
         // moving to another empty place
         if (Math.abs(overData.position - activeData.position) === 1 || Math.abs(overData.position - activeData.position) === 8){
@@ -223,7 +225,6 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
       return;
     }
 
-    // TODO: 可以隔很多格跳嗎？
     if (rules.isCannon(activeData)){
         // x axis: abs(over.position - current.position) === 2
         if (Math.abs(overData.position - activeData.position) === 2){
@@ -346,25 +347,25 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
 
 function GameSection({setEventInfo, gameId}){
     const [side, setSide] = useState(null);
-    // TODO: 動完每一步都要更新sequence 同步到資料庫
     const [sequence, setSequence] = useState(null);
 
     const [currentUser, setCurrentUser] = useState({});
     const [opponent, setOpponent] = useState({})
-  
+
+    const showUserSide = gameId === "single" ? currentUser.displayName : currentUser.uid
+    const showOpponentSide = gameId === "single" ? opponent.displayName : opponent.uid
+
+    console.log(showUserSide)
+    console.log(side)
+
     useEffect(() => {
       if (gameId==="single"){
         // TODO: single 就存在localStorage
-        const me = {"uid": "@user22336", "displayName": "Me"}
-        const opponentSide = {"uid": "@robot18732", "displayName": "Robot"} 
+        const me = {"uid": "@single22336", "displayName": "Me"}
+        const opponentSide = {"uid": "@single18732", "displayName": "Opponent"} 
         setCurrentUser(me)
         setOpponent(opponentSide)
-        setSequence(me);
-        let newSide = {
-          [me]: null,
-          [opponentSide]: null
-        }
-        setSide(newSide);
+        setSequence(me.displayName);
       } else {
       // currentUser or opponent -> {"uid": "", "displayName": ""}
       setCurrentUser(auth.currentUser)
@@ -407,17 +408,23 @@ function GameSection({setEventInfo, gameId}){
    }, [gameId]); 
 
   function changeSequence(){
+    if (gameId !== "single"){
       if (currentUser.uid === sequence){
         setSequence(opponent.uid)
-        if (gameId !== "single"){
-          updateSequence(gameId, opponent.uid)
-        }
+        updateSequence(gameId, opponent.uid)
       } else {
         setSequence(currentUser.uid)
-        if (gameId !== "single"){
-          updateSequence(gameId, currentUser.uid)
-        }
+        updateSequence(gameId, currentUser.uid)
       }
+
+    } else {
+      if (currentUser.displayName === sequence){
+        setSequence(opponent.displayName)
+      } else {
+        setSequence(currentUser.displayName)
+      }
+    }
+
   }
  
   return (
@@ -426,20 +433,29 @@ function GameSection({setEventInfo, gameId}){
 
     <div className={`m-auto w-2/4 border border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
       <div className='pl-3 py-2 w-14 h-14'>
-      <img src={opponent.photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} class="rounded-xl" />
+      {opponent.photoURL ? 
+        <img src={opponent.photoURL} className="rounded-xl" /> :
+        <div className="w-full h-full border rounded-xl" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}}></div>
+      }  
       </div>
-      <div className='p-5'>{opponent.displayName}</div>
+      <div className='p-5 font-bold' style={{ color: "#96602E" }}>{opponent.displayName}</div>
       <div className='py-2 m-auto'>
-        {side && side[opponent.uid] &&
+        {side && side[showOpponentSide] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
-        <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[opponent.uid]].color }}>
-          <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[opponent.uid]].color }}>{ chessStyle[side[opponent.uid]].king }
+        <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[showOpponentSide]].color }}>
+          <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[showOpponentSide]].color }}>{ chessStyle[side[showOpponentSide]].king }
           </p>
         </div>
       </div>
       }
         </div>
-      <div>{ currentUser.uid !== sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }</div>
+      <div>
+        { gameId === "single" ? <>
+      { currentUser.displayName !== sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }
+      </>:
+        <>{ currentUser.uid !== sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }</>
+      }
+        </div>
       </div>
       {/* TODO Banqi bg another option: #9C836A*/}
         <div className="h-3/5 w-full border rounded-md p-3" style={{backgroundColor: "#96602E", borderColor: "#C18859"}}>
@@ -451,20 +467,30 @@ function GameSection({setEventInfo, gameId}){
         </div>
       <div className={`m-auto w-2/4 border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
       <div className='pl-3 py-2 w-14 h-14'>
-        <img src={currentUser.photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} class="rounded-xl" />
+        {currentUser.photoURL ? 
+        <img src={currentUser.photoURL} className="rounded-xl" /> :
+        <div className="w-full h-full border rounded-xl" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}}></div>
+      }
+      
       </div>
-      <div className='p-5'>{currentUser.displayName}</div>
+      <div className='p-5 font-bold' style={{ color: "#96602E" }}>{currentUser.displayName}</div>
       <div className='p-1 m-auto'>
-      {side && side[currentUser.uid] &&
+      {side && side[showUserSide] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
-        <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[currentUser.uid]].color }}>
-          <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[currentUser.uid]].color }}>{ chessStyle[side[currentUser.uid]].king }
+        <div className="rounded-full px-1 border-2 flex justify-center items-center" style={{ borderColor: chessStyle[side[showUserSide]].color }}>
+          <p className="text-3xl lxgw-wenkai-tc-regular select-none" style={{ color: chessStyle[side[showUserSide]].color }}>{ chessStyle[side[showUserSide]].king }
           </p>
         </div>
         </div>
       }
         </div>
-        <div>{ currentUser.uid === sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }</div>
+        <div>
+        { gameId === "single" ? <>
+      { currentUser.displayName === sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }
+      </>:
+        <>{ currentUser.uid === sequence && <FontAwesomeIcon icon={faFlag} size="xl" className="p-4" style={{color: "#FFD43B"}} /> }</>
+      }
+          </div>
       
         </div>
       </div>
@@ -488,7 +514,10 @@ function ChatMessage(props) {
   return (<>
       <div className={`flex mb-1 ${messageAlgn}`}>
         <div className={`h-10 w-10 ${auth.currentUser.uid===userId ? "ml-2" : "mr-2"}`}>
-        <img src={photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} className="rounded-full" />
+        {photoURL ? 
+          <img src={photoURL} className="rounded-full" /> :
+          <div className="w-full h-full border rounded-xl" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}}></div>
+        }  
         </div>
         <div className="py-1">
         {/* <p class="text-xs font-voll">{displayName}</p> */}
@@ -538,7 +567,7 @@ function ChatRoom({eventInfo, gameId}){
   </div>
     <form onSubmit={sendMessage} className='flex w-full border-t absolute inset-x-0 bottom-0' style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
       <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="Type message..." className="ml-4 my-3 py-2 px-3 w-2/3 placeholder:text-gray-600 rounded-md text-black text-sm" />
-      <button type="submit" disabled={!formValue} class="m-auto px-3 py-2 rounded-lg text-xs font-bold border" style={{backgroundColor: "#FFFBF8", borderColor: "#B59376", color: "#96602E"}}>SEND</button>
+      <button type="submit" disabled={!formValue} className="m-auto px-3 py-2 rounded-lg text-xs font-bold border" style={{backgroundColor: "#FFFBF8", borderColor: "#B59376", color: "#96602E"}}>SEND</button>
     </form>
   </div>
   </div>
@@ -550,14 +579,18 @@ export default function Page({ params }) {
 
   const [eventInfo, setEventInfo] = useState('<>');
 
-  useEffect
-
   return (
       <>
         <Header/>
         <div className="min-h-screen py-24 px-12 flex w-full">
           <GameSection setEventInfo={setEventInfo} gameId={params.game}/>
-          { params.game === "single" ? null :
+          { params.game === "single" ? 
+          <>
+            <div className="w-1/3 flex flex-col justify-center items-center">
+            <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
+            </div>
+          </>
+          :
             <ChatRoom eventInfo={eventInfo} gameId={params.game}/>
           }
         </div>
