@@ -89,8 +89,8 @@ export default function Home() {
     <main className="">
       <Header/>
       <div className="mt-32 flex justify-center items-center">
-      <div className="w-2/6 border rounded-md p-8 drop-shadow-md" style={{backgroundColor: "#9C836A", borderColor: "#B59376"}}>
-      <p className="text-4xl font-bold text-center mb-6" style={{color: "#FFF3E8"}}>暗棋 Banqi Chess</p>
+      <div className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-8 px-2 md:px-8 md:py-12 drop-shadow-md" style={{backgroundColor: "#9C836A", borderColor: "#B59376"}}>
+      <p className="text-3xl md:text-4xl font-bold text-center mb-6" style={{color: "#FFF3E8"}}>暗棋 Banqi Chess</p>
       { multiPlayerMode &&
       <p className={`${user ? "mb-4" : "mb-8"} text-center italic text-sm`} style={{color: "#FFF3E8"}}>注意：遊玩遊戲須先登入Google帳號。</p>
       }

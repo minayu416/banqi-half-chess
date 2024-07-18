@@ -48,18 +48,18 @@ function Draggable(props) {
     ref={setNodeRef}
     // ref={props.currentUser === props.sequence ? setNodeRef : null}
     key={props.children.sn} 
-    className={`absolute rounded-full w-20 h-20 drop-shadow-lg flex justify-center items-center`} 
+    className={`absolute rounded-full w-14 h-14 lg:w-20 lg:h-20 drop-shadow-lg flex justify-center items-center`} 
     style={{ backgroundColor: "#F1D6AE", ...style }}
     {...listeners} {...attributes}>
     {!props.children.turned?
     // 蓋牌
-    <div className="rounded-full w-[4.5rem] h-[4.5rem] flex justify-center items-center">
+    <div className="rounded-full w-[2.5rem] h-[2.5rem] lg:w-[4.5rem] lg:h-[4.5rem] flex justify-center items-center">
       {/* <p className="text-5xl lxgw-wenkai-tc-regular select-none" style={{ color: props.children.color }}>{ props.children.chineseName }
       </p> */}
     </div>
     :
-      <div className="transition-transform ease-in-out duration-500 rounded-full w-[4.5rem] h-[4.5rem] border-2 flex justify-center items-center" style={{ borderColor: props.children.color, transform: 'rotateY(180deg)' }}>
-        <p className="text-5xl lxgw-wenkai-tc-regular select-none" style={{ color: props.children.color, transform: 'rotateY(180deg)' }}>{ props.children.chineseName }
+      <div className="transition-transform ease-in-out duration-500 rounded-full w-[2.5rem] h-[2.5rem] lg:w-[4.5rem] lg:h-[4.5rem] border-2 flex justify-center items-center" style={{ borderColor: props.children.color, transform: 'rotateY(180deg)' }}>
+        <p className="text-3xl lg:text-5xl lxgw-wenkai-tc-regular select-none" style={{ color: props.children.color, transform: 'rotateY(180deg)' }}>{ props.children.chineseName }
         </p>
       </div>
       }
@@ -345,7 +345,7 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
     )
 }
 
-function GameSection({setEventInfo, gameId}){
+function GameSection({setEventInfo, eventInfo, gameId}){
     const [side, setSide] = useState(null);
     const [sequence, setSequence] = useState(null);
 
@@ -355,14 +355,11 @@ function GameSection({setEventInfo, gameId}){
     const showUserSide = gameId === "single" ? currentUser.displayName : currentUser.uid
     const showOpponentSide = gameId === "single" ? opponent.displayName : opponent.uid
 
-    console.log(showUserSide)
-    console.log(side)
-
     useEffect(() => {
       if (gameId==="single"){
         // TODO: single 就存在localStorage
         const me = {"uid": "@single22336", "displayName": "Me"}
-        const opponentSide = {"uid": "@single18732", "displayName": "Opponent"} 
+        const opponentSide = {"uid": "@single18732", "displayName": "Oppo."} 
         setCurrentUser(me)
         setOpponent(opponentSide)
         setSequence(me.displayName);
@@ -429,16 +426,16 @@ function GameSection({setEventInfo, gameId}){
  
   return (
 
-    <div className="w-2/3 flex flex-col justify-center items-center">
+    <div className="w-full lg:w-2/3 flex flex-row-reverse lg:flex-col justify-center items-center">
 
-    <div className={`m-auto w-2/4 border border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
-      <div className='pl-3 py-2 w-14 h-14'>
+    <div className={`ml-2.5 lg:m-auto w-[10%] h-4/6 lg:w-2/4 lg:h-auto border border flex flex-col lg:flex-row justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
+      <div className='mt-2 pl-0 py-0 lg:pl-3 lg:py-2 lg:mt-0 w-10 h-10 lg:w-14 lg:h-14'>
       {opponent.photoURL ? 
         <img src={opponent.photoURL} className="rounded-xl" /> :
         <div className="w-full h-full border rounded-xl" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}}></div>
       }  
       </div>
-      <div className='p-5 font-bold' style={{ color: "#96602E" }}>{opponent.displayName}</div>
+      <div className='p-2 lg:p-5 font-bold' style={{ color: "#96602E" }}>{opponent.displayName}</div>
       <div className='py-2 m-auto'>
         {side && side[showOpponentSide] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
@@ -457,23 +454,27 @@ function GameSection({setEventInfo, gameId}){
       }
         </div>
       </div>
+ 
       {/* TODO Banqi bg another option: #9C836A*/}
-        <div className="h-3/5 w-full border rounded-md p-3" style={{backgroundColor: "#96602E", borderColor: "#C18859"}}>
+        <div className="h-5/6 lg:h-3/5 w-full">
+        <p className='text-center mb-1 lg:hidden text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</p>
+          <div className='w-full h-full border rounded-md p-3' style={{backgroundColor: "#96602E", borderColor: "#C18859"}}>
             <div className="w-full h-full border-2 rounded-md" style={{borderColor: "#3C3B3B"}}>
               {opponent.uid &&
                 <Board gameId={gameId} currentUser={currentUser} opponent={opponent} side={side} setSide={setSide} sequence={sequence} changeSequence={changeSequence} setEventInfo={setEventInfo} />
               }
               </div>
+          </div>
         </div>
-      <div className={`m-auto w-2/4 border flex justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
-      <div className='pl-3 py-2 w-14 h-14'>
+      <div className={`mr-2.5 lg:m-auto w-[10%] h-4/6 lg:w-2/4 lg:h-auto border flex flex-col lg:flex-row justify-center items-center`} style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
+      <div className='mt-2 pl-0 py-0 lg:pl-3 lg:py-2 lg:mt-0 w-10 h-10 lg:w-14 lg:h-14'>
         {currentUser.photoURL ? 
         <img src={currentUser.photoURL} className="rounded-xl" /> :
         <div className="w-full h-full border rounded-xl" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}}></div>
       }
       
       </div>
-      <div className='p-5 font-bold' style={{ color: "#96602E" }}>{currentUser.displayName}</div>
+      <div className='p-2 lg:p-5 font-bold' style={{ color: "#96602E" }}>{currentUser.displayName}</div>
       <div className='p-1 m-auto'>
       {side && side[showUserSide] &&
       <div className={`rounded-full p-1 flex justify-center items-center`} style={{ backgroundColor: "#F1D6AE", borderColor: "#B59376" }}>
@@ -530,7 +531,7 @@ function ChatMessage(props) {
   </>)
 }
 
-function ChatRoom({eventInfo, gameId}){
+function ChatRoom({gameId}){
   const dummy = useRef();
 
   const [formValue, setFormValue] = useState('');
@@ -557,41 +558,55 @@ function ChatRoom({eventInfo, gameId}){
 } 
 
  return (
-  <div className="w-1/3 flex flex-col justify-center items-center">
-  <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
-  <div className='flex flex-col h-3/4 w-4/5 relative border rounded-md' style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
+
+  <div className='flex flex-col h-full w-full lg:h-3/4 lg:w-4/5 relative border rounded-md' style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
   <div className="h-full p-4">
   
   <span ref={dummy}></span>
     {messages && messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
   </div>
-    <form onSubmit={sendMessage} className='flex w-full border-t absolute inset-x-0 bottom-0' style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+    <form onSubmit={sendMessage} className='flex w-full border-t absolute inset-x-0 bottom-0 rounded-b-md' style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
       <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="Type message..." className="ml-4 my-3 py-2 px-3 w-2/3 placeholder:text-gray-600 rounded-md text-black text-sm" />
       <button type="submit" disabled={!formValue} className="m-auto px-3 py-2 rounded-lg text-xs font-bold border" style={{backgroundColor: "#FFFBF8", borderColor: "#B59376", color: "#96602E"}}>SEND</button>
     </form>
   </div>
-  </div>
  )
 }
 
+function Sidebar({gameId, extendChatRoomRef}){
+
+  return (
+    <>
+    <div ref={extendChatRoomRef} className='absolute h-full w-1/3 p-3 inset-y-0 right-0 lg:hidden border' style={{backgroundColor: "#B59376", borderColor: "#96602E", zIndex: 3}}>
+      <ChatRoom gameId={gameId}/>
+      </div>
+    </>
+  )
+}
+
 export default function Page({ params }) {
-  // TODO: singleMode 導向另一個地方、取消ChatRoom，某些函式可以抽出來共用
 
   const [eventInfo, setEventInfo] = useState('<>');
 
+  const extendChatRoomRef = useRef(null);
+
   return (
       <>
-        <Header/>
-        <div className="min-h-screen py-24 px-12 flex w-full">
-          <GameSection setEventInfo={setEventInfo} gameId={params.game}/>
+        <Header gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>
+        {params.game !== "single" && <Sidebar gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>}
+        <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
+          <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} gameId={params.game}/>
           { params.game === "single" ? 
           <>
-            <div className="w-1/3 flex flex-col justify-center items-center">
+            <div className="hidden lg:flex w-1/3 flex-col justify-center items-center">
             <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
             </div>
           </>
           :
-            <ChatRoom eventInfo={eventInfo} gameId={params.game}/>
+          <div className="hidden lg:flex flex-col w-1/3 justify-center items-center">
+          <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
+            <ChatRoom gameId={params.game}/>
+            </div>
           }
         </div>
       </>
