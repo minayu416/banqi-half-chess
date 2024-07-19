@@ -103,6 +103,7 @@ export const fetchNewMessages = (gameId, callback) => {
         id: doc.id,
         ...doc.data(),
     }));
+    messages.reverse();
       callback(messages);
     }
   });
