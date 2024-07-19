@@ -1,19 +1,18 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
 
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
-import { collection, doc, getDoc, getDocs, updateDoc, addDoc, setDoc, query, orderBy, limit, getFirestore, onSnapshot, serverTimestamp } from "firebase/firestore"
+import { collection, doc, getDoc, updateDoc, addDoc, setDoc, query, orderBy, limit, getFirestore, onSnapshot, serverTimestamp } from "firebase/firestore"
 
 const firebaseConfig = {
-    apiKey: "AIzaSyA8_NLNJW8mZLaNfnpqO4I9i9Q08IuVnfA",
-    authDomain: "banqi-half-chess.firebaseapp.com",
-    projectId: "banqi-half-chess",
-    storageBucket: "banqi-half-chess.appspot.com",
-    messagingSenderId: "666331770434",
-    appId: "1:666331770434:web:b8e1df7f15923a346e87db",
-    measurementId: "G-FCBJWRHZJL"
+    apiKey: process.env.API_KEY,
+    authDomain: process.env.AUTH_DOMAIN,
+    projectId: process.env.PROJECT_ID,
+    storageBucket: process.env.STORAGE_BUCKET,
+    messagingSenderId: process.env.MESSAGING_SENDER_ID,
+    appId: process.env.APP_ID,
+    measurementId: process.env.MEASUREMENT_ID
   };
 
 const app = initializeApp(firebaseConfig);
