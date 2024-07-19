@@ -5,14 +5,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
 
 
-export function HomeHeader(){
+export function HeaderBase({children}){
     return (
         <div className="fixed inset-x-0 top-0 h-12 md:h-12 lg:h-16" style={{backgroundColor: "#B59376",}}>
+        {children}
         </div>
     );
 }
 
-export function Header({gameId, setShowChatRoom, menuRef}) {
+export function GameHeader({gameId, setShowChatRoom, menuRef}) {
 
     const router = useRouter();
 
@@ -25,7 +26,7 @@ export function Header({gameId, setShowChatRoom, menuRef}) {
       };
 
     return (
-        <div className="fixed inset-x-0 top-0 h-12 md:h-12 lg:h-16" style={{backgroundColor: "#B59376",}}>
+        <>
             <div className='absolute top-0 left-0'>
             <div className='p-3 lg:p-5 cursor-pointer' onClick={() => backHome()}>
                 <FontAwesomeIcon icon={faHouse} size="xl" style={{color: "#F1D6AE", borderColor: "#3C3B3B"}}/>
@@ -38,7 +39,7 @@ export function Header({gameId, setShowChatRoom, menuRef}) {
                     </div>
                 </div>
             }
-        </div>
+        </>
     );
   }
 
