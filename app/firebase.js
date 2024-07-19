@@ -87,6 +87,7 @@ export const createOrJoinGame = async (gameId, user) => {
       creator: {"uid": user.uid, "displayName": user.displayName, "photoURL": user.photoURL}, 
       // opponent: null, 
       sequence: user.uid,
+      createdAt: serverTimestamp(),
     });
     return {"gameCreator": user, "gameOpponent": {"uid": null, "displayName": null}, "gameSequence": user.uid}
   }
