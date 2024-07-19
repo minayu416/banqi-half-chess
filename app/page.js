@@ -6,7 +6,7 @@ import { auth, signInWithGoogle, SignOut } from "./firebase";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 
-import { Header, generateRandomCode } from "./component";
+import { Header, HomeHeader, generateRandomCode } from "./component";
 import { useState } from "react";
 
 
@@ -14,7 +14,7 @@ function LoginInfo({user}){
 
   return (
     <>
-    <div className="flex py-1 px-2 border rounded-md mb-4" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+    <div className="flex py-1 px-2 border rounded-md mb-2 lg:mb-4" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
       <div className="h-10 w-10 mr-2" >
       <img src={user.photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} className="rounded-full" />
       </div>
@@ -87,12 +87,12 @@ export default function Home() {
 
   return (
     <main className="">
-      <Header/>
-      <div className="mt-32 flex justify-center items-center">
-      <div className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-8 px-2 md:px-8 md:py-12 drop-shadow-md" style={{backgroundColor: "#9C836A", borderColor: "#B59376"}}>
-      <p className="text-3xl md:text-4xl font-bold text-center mb-6" style={{color: "#FFF3E8"}}>暗棋 Banqi Chess</p>
+      <HomeHeader/>
+      <div className="mt-16 lg:mt-32 flex justify-center items-center">
+      <div className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-6 px-2 lg:px-8 lg:py-12 drop-shadow-md" style={{backgroundColor: "#9C836A", borderColor: "#B59376"}}>
+      <p className="text-3xl md:text-4xl font-bold text-center mb-4 lg:mb-6" style={{color: "#FFF3E8"}}>暗棋 Banqi Chess</p>
       { multiPlayerMode &&
-      <p className={`${user ? "mb-4" : "mb-8"} text-center italic text-sm`} style={{color: "#FFF3E8"}}>注意：遊玩遊戲須先登入Google帳號。</p>
+      <p className={`${user ? "mb-3 lg:mb-4" : "mb-3 lg:mb-8"} text-center italic text-sm`} style={{color: "#FFF3E8"}}>注意：遊玩遊戲須先登入Google帳號。</p>
       }
         <div className="flex flex-col justify-center items-center">
         { multiPlayerMode ?
@@ -110,9 +110,9 @@ export default function Home() {
         {isJoinGame ? <>
           <form onSubmit={joinGame} className='rounded-lg flex flex-col justify-center items-center'>
 
-          <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="Enter game code." className="p-2 my-3 placeholder:text-gray-400 text-sm border rounded-lg font-bold" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}} />
+          <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="Enter game code." className="p-2 mb-2 lg:my-3 placeholder:text-gray-400 text-sm border rounded-lg font-bold" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376", color: "#96602E"}} />
 
-          <button type="submit" disabled={!formValue} className={`w-full rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+          <button type="submit" disabled={!formValue} className={`w-full rounded-lg py-1 mb-2 lg:mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
             <p className="text-xl font-bold text-center" style={fontLockStyle}>加入</p>
           </button>
 
@@ -122,10 +122,10 @@ export default function Home() {
         </button>
         </> :
         <>
-        <button onClick={() => newGame()} className={`w-2/5 rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+        <button onClick={() => newGame()} className={`w-2/5 rounded-lg py-1 mb-2 lg:mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
           <p className="text-xl font-bold text-center" style={fontLockStyle}>新遊戲</p>
         </button>
-        <button onClick={() => inVokeJoinGame()} className={`w-2/5 rounded-lg py-1 mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
+        <button onClick={() => inVokeJoinGame()} className={`w-2/5 rounded-lg py-1 mb-2 lg:mb-3 shadow-md ${user && "hover:translate-x-0.5 hover:translate-y-0.5"} ${user ? "cursor-pointer" : "cursor-default"}`} style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
           <p className="text-xl font-bold text-center" style={fontLockStyle}>加入遊戲</p>
         </button>
         <button onClick={() => back()} className="w-2/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>

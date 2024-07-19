@@ -14,7 +14,7 @@ import { Header } from "../component";
 import { ChessRules } from './rules';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFlag } from '@fortawesome/free-solid-svg-icons'
+import { faFlag, faL } from '@fortawesome/free-solid-svg-icons'
 
 // 可能要在這一層render 不同的棋子
 function Draggable(props) {
@@ -560,7 +560,7 @@ function ChatRoom({gameId}){
  return (
 
   <div className='flex flex-col h-full w-full lg:h-3/4 lg:w-4/5 relative border rounded-md' style={{backgroundColor: "#FFFBF8", borderColor: "#B59376"}}>
-  <div className="h-full p-4">
+  <div className="h-5/6 p-4 overflow-y-scroll">
   
   <span ref={dummy}></span>
     {messages && messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
@@ -574,10 +574,9 @@ function ChatRoom({gameId}){
 }
 
 function Sidebar({gameId, extendChatRoomRef}){
-
   return (
     <>
-    <div ref={extendChatRoomRef} className='absolute h-full w-1/3 p-3 inset-y-0 right-0 lg:hidden border' style={{backgroundColor: "#B59376", borderColor: "#96602E", zIndex: 3}}>
+    <div ref={extendChatRoomRef} className='absolute h-full w-1/3 p-3 inset-y-0 right-0 lg:hidden border transition-transform ease-in-out duration-300' style={{backgroundColor: "#B59376", borderColor: "#96602E", zIndex: 3}}>
       <ChatRoom gameId={gameId}/>
       </div>
     </>
@@ -589,11 +588,28 @@ export default function Page({ params }) {
   const [eventInfo, setEventInfo] = useState('<>');
 
   const extendChatRoomRef = useRef(null);
+  const menuRef = useRef(null);
+  const [showChatRoom, setShowChatRoom] = useState(false);
+
+  const handleClickOutside = (event) => {
+
+    if (extendChatRoomRef.current && !extendChatRoomRef.current.contains(event.target)) {
+      if (menuRef.current && !menuRef.current.contains(event.target))  
+      setShowChatRoom(false);
+    } 
+    };
+
+  useEffect(() => {
+      document.addEventListener('click', handleClickOutside);
+      return () => {
+      document.removeEventListener('click', handleClickOutside);
+      };
+  }, []);
 
   return (
       <>
-        <Header gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>
-        {params.game !== "single" && <Sidebar gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>}
+        <Header gameId={params.game} setShowChatRoom={setShowChatRoom} menuRef={menuRef}/>
+        {params.game !== "single" && showChatRoom && <Sidebar gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>}
         <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
           <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} gameId={params.game}/>
           { params.game === "single" ? 

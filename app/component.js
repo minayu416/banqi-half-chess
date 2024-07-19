@@ -1,33 +1,38 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useRouter } from "next/navigation";
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faComment } from '@fortawesome/free-solid-svg-icons'
+import { faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
 
 
-export function Header({gameId, extendChatRoomRef}) {
+export function HomeHeader(){
+    return (
+        <div className="fixed inset-x-0 top-0 h-12 md:h-12 lg:h-16" style={{backgroundColor: "#B59376",}}>
+        </div>
+    );
+}
+
+export function Header({gameId, setShowChatRoom, menuRef}) {
+
+    const router = useRouter();
 
     const extendRoom = () => {
-        extendChatRoomRef.current = true;
+        setShowChatRoom(true);
       };
 
-      const handleClickOutside = (event) => {
-        if (extendChatRoomRef.current && !extendChatRoomRef.current.contains(event.target)) {
-            // do nothing
-        } else {
-            extendChatRoomRef.current = false;
-        }
-        };
-
-    useEffect(() => {
-        document.addEventListener('click', handleClickOutside);
-        return () => {
-        document.removeEventListener('click', handleClickOutside);
-        };
-    }, []);
+      const backHome = () => {
+        router.push(`/`);
+      };
 
     return (
         <div className="fixed inset-x-0 top-0 h-12 md:h-12 lg:h-16" style={{backgroundColor: "#B59376",}}>
+            <div className='absolute top-0 left-0'>
+            <div className='p-3 lg:p-5 cursor-pointer' onClick={() => backHome()}>
+                <FontAwesomeIcon icon={faHouse} size="xl" style={{color: "#F1D6AE", borderColor: "#3C3B3B"}}/>
+            </div>
+            </div>
             {gameId && gameId !== "single" && 
-                <div className="absolute top-0 right-0">
+                <div ref={menuRef} className="absolute top-0 right-0">
                     <div className='p-3' onClick={() => extendRoom()}>
                     <FontAwesomeIcon icon={faComment} size="xl" style={{color: "#F1D6AE", borderColor: "#3C3B3B"}}/>
                     </div>
