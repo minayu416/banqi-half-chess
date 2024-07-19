@@ -32,7 +32,7 @@ export function Header({gameId, setShowChatRoom, menuRef}) {
             </div>
             </div>
             {gameId && gameId !== "single" && 
-                <div ref={menuRef} className="absolute top-0 right-0">
+                <div ref={menuRef} className="absolute top-0 right-0 lg:hidden">
                     <div className='p-3' onClick={() => extendRoom()}>
                     <FontAwesomeIcon icon={faComment} size="xl" style={{color: "#F1D6AE", borderColor: "#3C3B3B"}}/>
                     </div>
