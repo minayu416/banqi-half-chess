@@ -6,7 +6,7 @@ import { auth, db, createOrJoinGame, updateSide, updateSequence, updatePosition,
 
 import { doc, onSnapshot } from "firebase/firestore"
 
-import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
+import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 
 import { chessStyle, ChessShuffleHandler } from "./component"
 
@@ -14,7 +14,7 @@ import { Header } from "../component";
 import { ChessRules } from './rules';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFlag, faL } from '@fortawesome/free-solid-svg-icons'
+import { faFlag } from '@fortawesome/free-solid-svg-icons'
 
 // 可能要在這一層render 不同的棋子
 function Draggable(props) {
@@ -40,7 +40,6 @@ function Draggable(props) {
 
   return (  
     <>
-    {/* TODO: 這邊要修一下 */}
     {props.chess == '.' ? (
       <div>{null}</div>
   ) : ( 
@@ -190,7 +189,6 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
 
     }
 
-    // TODO: 你拿的不是自己的棋子 - 到時候單人模式跟雙人模式的邏輯要分開
     if(activeData.chess.sn[0] !== side[sequence]){
       setEventInfo('You took incorrect side chess.');
       return;
@@ -455,7 +453,7 @@ function GameSection({setEventInfo, eventInfo, gameId}){
         </div>
       </div>
  
-      {/* TODO Banqi bg another option: #9C836A*/}
+      {/* Banqi bg another option: #9C836A*/}
         <div className="h-5/6 lg:h-3/5 w-full">
         <p className='text-center mb-1 lg:hidden text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</p>
           <div className='w-full h-full border rounded-md p-3' style={{backgroundColor: "#96602E", borderColor: "#C18859"}}>
