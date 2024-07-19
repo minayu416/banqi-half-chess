@@ -10,7 +10,7 @@ import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 
 import { chessStyle, ChessShuffleHandler } from "./component"
 
-import { Header } from "../component";
+import { HeaderBase, GameHeader } from "../component";
 import { ChessRules } from './rules';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -588,6 +588,7 @@ export default function Page({ params }) {
   const extendChatRoomRef = useRef(null);
   const menuRef = useRef(null);
   const [showChatRoom, setShowChatRoom] = useState(false);
+  const [isGettingAuth, setIsGettingAuth] = useState(false);
 
   const handleClickOutside = (event) => {
 
@@ -598,6 +599,12 @@ export default function Page({ params }) {
     };
 
   useEffect(() => {
+    auth.authStateReady().then(() => {
+      if (auth.currentUser) {
+        setIsGettingAuth(true);
+      }
+    });
+
       document.addEventListener('click', handleClickOutside);
       return () => {
       document.removeEventListener('click', handleClickOutside);
@@ -606,21 +613,31 @@ export default function Page({ params }) {
 
   return (
       <>
-        <Header gameId={params.game} setShowChatRoom={setShowChatRoom} menuRef={menuRef}/>
+      <HeaderBase>
+        <GameHeader gameId={params.game} setShowChatRoom={setShowChatRoom} menuRef={menuRef}/>
+        </HeaderBase>
         {params.game !== "single" && showChatRoom && <Sidebar gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>}
         <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
+        { params.game !== "single" && isGettingAuth &&
           <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} gameId={params.game}/>
+        }
+        { params.game === "single" &&
+          <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} gameId={params.game}/>
+        }
           { params.game === "single" ? 
           <>
             <div className="hidden lg:flex w-1/3 flex-col justify-center items-center">
             <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
             </div>
           </>
-          :
-          <div className="hidden lg:flex flex-col w-1/3 justify-center items-center">
-          <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
-            <ChatRoom gameId={params.game}/>
-            </div>
+          :<>
+          {isGettingAuth &&
+            <div className="hidden lg:flex flex-col w-1/3 justify-center items-center">
+            <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
+              <ChatRoom gameId={params.game}/>
+              </div>
+            }
+          </>
           }
         </div>
       </>
