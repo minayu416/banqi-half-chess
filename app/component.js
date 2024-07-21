@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from "next/navigation";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
+import { faComment, faHouse, faCircleQuestion } from '@fortawesome/free-solid-svg-icons'
 
 
 export function HeaderBase({children}){
@@ -13,7 +13,7 @@ export function HeaderBase({children}){
     );
 }
 
-export function GameHeader({gameId, setShowChatRoom, menuRef}) {
+export function GameHeader({gameId, setShowChatRoom, setShowInstructions, menuRef}) {
 
     const router = useRouter();
 
@@ -25,11 +25,18 @@ export function GameHeader({gameId, setShowChatRoom, menuRef}) {
         router.push(`/`);
       };
 
+    const showInstructions = () => {
+        setShowInstructions(true);
+      };
+
     return (
         <>
-            <div className='absolute top-0 left-0'>
+            <div className='absolute top-0 left-0 flex'>
             <div className='p-3 lg:p-5 cursor-pointer' onClick={() => backHome()}>
                 <FontAwesomeIcon icon={faHouse} size="xl" style={{color: "#F1D6AE", borderColor: "#3C3B3B"}}/>
+            </div>
+            <div ref={menuRef} className='p-3 lg:p-5 cursor-pointer' onClick={() => showInstructions()}>
+            <FontAwesomeIcon icon={faCircleQuestion} size="xl" style={{color: "#F1D6AE", borderColor: "#3C3B3B"}}/>
             </div>
             </div>
             {gameId && gameId !== "single" && 

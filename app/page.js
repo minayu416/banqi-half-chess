@@ -137,10 +137,10 @@ export default function Home() {
         : 
         <>
         <button onClick={() => newSingleGame()} className="w-2/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
-          <p className="text-xl font-bold text-center" style={fontStyle}>單人模式</p>
+          <p className="text-xl font-bold text-center" style={fontStyle}>單機模式</p>
         </button>
         <button onClick={() => multiGame()} className="w-2/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer" style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
-          <p className="text-xl font-bold text-center" style={fontStyle}>雙人模式</p>
+          <p className="text-xl font-bold text-center" style={fontStyle}>連線模式</p>
         </button>
         </>
 }
