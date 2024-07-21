@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 
+import { useRouter } from "next/navigation";
+
 import { auth, db, createOrJoinGame, updateSide, updateSequence, updatePosition, fetchLatestPosition, writeSendMessage, fetchNewMessages } from '../firebase'
 
 import { doc, onSnapshot } from "firebase/firestore"
@@ -14,7 +16,7 @@ import { HeaderBase, GameHeader } from "../component";
 import { ChessRules } from './rules';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFlag, faL, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faFlag, faXmark, faHouse } from '@fortawesome/free-solid-svg-icons'
 
 // 可能要在這一層render 不同的棋子
 function Draggable(props) {
@@ -601,6 +603,29 @@ function Instructions({setShowInstructions}){
   )
 }
 
+function IsNotLoginMessage(){
+  const router = useRouter();
+
+  const backHome = () => {
+    router.push(`/`);
+  };
+
+  return (
+    <>
+    <div className='absolute h-3/5 w-3/5 lg:h-2/6 xl:w-2/5 2xl:w-2/5 top-[15%] lg:top-[10%] left-[25%] rounded-md border-4 p-4' style={{backgroundColor: "#F1D6AE", borderColor: "#B59376", zIndex: 5}}>
+    <p className="text-md md:text-xl font-bold" style={{ color: "#96602E" }}>您尚未登入，請由首頁登入，並加入遊戲</p>
+      <p className="text-md md:text-xl font-bold" style={{ color: "#96602E" }}>You haven't login, please login from home page.</p>
+      <div className='flex justify-center'>
+          <div className='p-3 lg:p-5 cursor-pointer' onClick={() => backHome()}>
+              <FontAwesomeIcon icon={faHouse} size="xl" style={{color: "#B59376"}}/>
+          </div>
+        </div>
+      </div>
+
+    </>
+  )
+}
+
 export default function Page({ params }) {
 
   const [eventInfo, setEventInfo] = useState('<>');
@@ -612,8 +637,6 @@ export default function Page({ params }) {
   const [showInstructions, setShowInstructions] = useState(false);
 
   const handleClickOutside = (event) => {
-
-
     if (extendChatRoomRef.current && !extendChatRoomRef.current.contains(event.target)) {
       if (menuRef.current && !menuRef.current.contains(event.target)){
       setShowChatRoom(false);
@@ -642,8 +665,11 @@ export default function Page({ params }) {
         {showInstructions && <Instructions setShowInstructions={setShowInstructions}/>}
         {params.game !== "single" && showChatRoom && <Sidebar gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>}
         <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
-        { params.game !== "single" && isGettingAuth &&
+        { (params.game !== "single" && isGettingAuth) ?
           <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} gameId={params.game}/>
+          : <>
+            <IsNotLoginMessage/>
+          </>
         }
         { params.game === "single" &&
           <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} gameId={params.game}/>
