@@ -6,7 +6,7 @@ import { auth, signInWithGoogle, SignOut } from "./firebase";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 
-import { HeaderBase, generateRandomCode } from "./component";
+import { HeaderBase, generateUniqueRandomGameCode } from "./component";
 import { useState } from "react";
 
 
@@ -31,6 +31,8 @@ function LoginInfo({user}){
   )
 }
 
+
+
 export default function Home() {
 
   const router = useRouter();
@@ -50,10 +52,20 @@ export default function Home() {
     color: user ? "#96602E" : "#A19F9F"
   }
   
-  const newGame = () => {
-    if (user){
-    const randomCode = generateRandomCode();
-    router.push(`/${randomCode}/`);
+  const newGame = async () => {
+    if (user) {
+      try {
+        const randomCode = await generateUniqueRandomGameCode();
+
+        if (randomCode) {
+          router.push(`/${randomCode}/`); 
+        } else {
+          console.error("Failed to generate a unique game ID");
+        }
+      } catch (error) {
+        console.error("Error creating new game:", error);
+      } finally {
+      }
     }
   };
 

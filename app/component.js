@@ -1,6 +1,8 @@
 import React from 'react';
 import { useRouter } from "next/navigation";
 
+import { checkGameIdExists } from "./firebase";
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faComment, faHouse, faCircleQuestion } from '@fortawesome/free-solid-svg-icons'
 
@@ -51,7 +53,7 @@ export function GameHeader({gameId, setShowChatRoom, setShowInstructions, menuRe
   }
 
 
-export function generateRandomCode() {
+function generateRandomCode() {
 const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 let randomCode = '';
 for (let i = 0; i < 5; i++) {
@@ -60,3 +62,26 @@ for (let i = 0; i < 5; i++) {
 }
 return randomCode;
 }
+
+export async function generateUniqueRandomGameCode(maxAttempts = 5) {
+    let randomCode;
+    let exists = true;
+    let attempts = 0;
+
+    while (exists && attempts < maxAttempts) {
+      randomCode = generateRandomCode()
+      try {
+        exists = await checkGameIdExists(randomCode); 
+      } catch (error) {
+        console.error("Error in generateUniqueRandomCode:", error);
+        return null; 
+      }
+      attempts++;
+    }
+  
+    if (exists) {
+      throw new Error("Unable to generate a unique game ID after maximum attempts");
+    }
+  
+    return randomCode;
+  }
