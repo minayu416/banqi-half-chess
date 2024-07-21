@@ -14,7 +14,7 @@ import { HeaderBase, GameHeader } from "../component";
 import { ChessRules } from './rules';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFlag } from '@fortawesome/free-solid-svg-icons'
+import { faFlag, faL, faXmark } from '@fortawesome/free-solid-svg-icons'
 
 // 可能要在這一層render 不同的棋子
 function Draggable(props) {
@@ -79,12 +79,8 @@ function DroppableCell(props) {
     },
   });
 
-  // TODO: 需要更改邏輯。
-  const sameSide = active && active.data.current?.sn[0] == (props.chess !== '.' && props.chess.sn[0]);
-
-  // TODO: 判斷移動空位時也可以是green
   const style = {
-    background: isOver ? (sameSide ? 'red' : 'green') : undefined,
+    background: isOver ? 'rgba(255, 255, 255, 0.3)' : undefined,
   };
 
   return (
@@ -581,6 +577,30 @@ function Sidebar({gameId, extendChatRoomRef}){
   )
 }
 
+
+
+function Instructions({setShowInstructions}){
+
+  const closeInstructions = () => {
+    setShowInstructions(false);
+  };
+
+  return (
+    <>
+    <div className='absolute w-full h-full' style={{backgroundColor: "rgba(0, 0, 0, 0.6)", zIndex: 4}}></div>
+    <div className='absolute h-3/5 w-3/5 lg:h-2/6 xl:w-2/5 2xl:w-2/5 top-[10%] left-[25%] rounded-md border-4 p-4' style={{backgroundColor: "#F1D6AE", borderColor: "#B59376", zIndex: 5}}>
+    <div className='absolute top-0 right-0 p-1 cursor-pointer' onClick={() => closeInstructions()}><FontAwesomeIcon icon={faXmark} size="2xl" style={{color: "#B59376"}}/></div>
+    <p className="font-bold" style={{ color: "#96602E" }}>翻開的棋才能移動，只能攻擊翻開的棋。</p>
+      <p className="font-bold" style={{ color: "#96602E" }}>每個棋只能移動相鄰一格，砲/炮移動一格，但需要跳棋攻擊，與欲攻擊的棋中間必須只能存在一顆棋。</p>
+      <p className="font-bold" style={{ color: "#96602E" }}>剋制關係：將-{`>`}士-{`>`}象-{`>`}車-{`>`}馬-{`>`}炮-{`>`}兵-{`>`}將</p>
+      <p className="font-bold" style={{ color: "#96602E" }}>兵只能吃卒或將，卒只能吃兵或帥</p>
+      <p className="font-bold" style={{ color: "#96602E" }}>將不能吃兵、帥不能吃卒</p>
+      </div>
+
+    </>
+  )
+}
+
 export default function Page({ params }) {
 
   const [eventInfo, setEventInfo] = useState('<>');
@@ -589,12 +609,15 @@ export default function Page({ params }) {
   const menuRef = useRef(null);
   const [showChatRoom, setShowChatRoom] = useState(false);
   const [isGettingAuth, setIsGettingAuth] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const handleClickOutside = (event) => {
 
+
     if (extendChatRoomRef.current && !extendChatRoomRef.current.contains(event.target)) {
-      if (menuRef.current && !menuRef.current.contains(event.target))  
+      if (menuRef.current && !menuRef.current.contains(event.target)){
       setShowChatRoom(false);
+      }
     } 
     };
 
@@ -614,8 +637,9 @@ export default function Page({ params }) {
   return (
       <>
       <HeaderBase>
-        <GameHeader gameId={params.game} setShowChatRoom={setShowChatRoom} menuRef={menuRef}/>
+        <GameHeader gameId={params.game} setShowChatRoom={setShowChatRoom} setShowInstructions={setShowInstructions} menuRef={menuRef}/>
         </HeaderBase>
+        {showInstructions && <Instructions setShowInstructions={setShowInstructions}/>}
         {params.game !== "single" && showChatRoom && <Sidebar gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>}
         <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
         { params.game !== "single" && isGettingAuth &&

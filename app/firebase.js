@@ -58,28 +58,48 @@ export const updateSequence = async (gameId, sequence) => {
     });
 }
 
+export const checkGameIdExists = async (gameId) => {
+  try {
+    const docRef = doc(db, "games", gameId);
+    const docSnap = await getDoc(docRef);
+  return docSnap.exists();
+} catch (error) {
+    console.error("Error when checking game ID:", error);
+  throw error;
+}
+};
+
 export const createOrJoinGame = async (gameId, user) => {
   const docRef = doc(db, "games", gameId);
   const docSnap = await getDoc(docRef);
 
+  // 已經有game的資料
   if (docSnap.exists()) {
-    // 代表是刷新的
+    // 有game資料，也有 opponent，代表是使用者重新整理或掉線
     if (docSnap.data().opponent){
 
       return {"gameCreator": docSnap.data().creator, 
       "gameOpponent": docSnap.data().opponent,
       "gameSequence": docSnap.data().sequence
     }
-
+    // 有 game 資料，1. 如果currentUser === creator 不理他, 2. 如果不是，則設定 opponent
     } else {
-    const exixtingGameRef = doc(db, "games", gameId);
-    await updateDoc(exixtingGameRef, {
-      opponent: {"uid": user.uid, "displayName": user.displayName, "photoURL": user.photoURL}
-    });
+      let setOpponent
+      if(user.uid !== docSnap.data().creator.uid){
+        setOpponent = {"uid": user.uid, "displayName": user.displayName, "photoURL": user.photoURL}
+        const exixtingGameRef = doc(db, "games", gameId);
+        await updateDoc(exixtingGameRef, {
+          opponent: setOpponent
+        });
+      }
+      else {
+        setOpponent = {"uid": null, "displayName": null}
+      }
     return {"gameCreator": docSnap.data().creator, 
-            "gameOpponent": {"uid": user.uid, "displayName": user.displayName, "photoURL": user.photoURL}, 
+            "gameOpponent": setOpponent, 
             "gameSequence": docSnap.data().creator.uid}
     }
+  // 沒有 game 的資料 -> 創新的遊戲、設立currentUser為
   } else {
     // docSnap.data() will be undefined in this case
   

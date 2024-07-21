@@ -1,8 +1,10 @@
 import React from 'react';
 import { useRouter } from "next/navigation";
 
+import { checkGameIdExists } from "./firebase";
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
+import { faComment, faHouse, faCircleQuestion } from '@fortawesome/free-solid-svg-icons'
 
 
 export function HeaderBase({children}){
@@ -13,7 +15,7 @@ export function HeaderBase({children}){
     );
 }
 
-export function GameHeader({gameId, setShowChatRoom, menuRef}) {
+export function GameHeader({gameId, setShowChatRoom, setShowInstructions, menuRef}) {
 
     const router = useRouter();
 
@@ -25,11 +27,18 @@ export function GameHeader({gameId, setShowChatRoom, menuRef}) {
         router.push(`/`);
       };
 
+    const showInstructions = () => {
+        setShowInstructions(true);
+      };
+
     return (
         <>
-            <div className='absolute top-0 left-0'>
+            <div className='absolute top-0 left-0 flex'>
             <div className='p-3 lg:p-5 cursor-pointer' onClick={() => backHome()}>
                 <FontAwesomeIcon icon={faHouse} size="xl" style={{color: "#F1D6AE", borderColor: "#3C3B3B"}}/>
+            </div>
+            <div ref={menuRef} className='p-3 lg:p-5 cursor-pointer' onClick={() => showInstructions()}>
+            <FontAwesomeIcon icon={faCircleQuestion} size="xl" style={{color: "#F1D6AE", borderColor: "#3C3B3B"}}/>
             </div>
             </div>
             {gameId && gameId !== "single" && 
@@ -44,7 +53,7 @@ export function GameHeader({gameId, setShowChatRoom, menuRef}) {
   }
 
 
-export function generateRandomCode() {
+function generateRandomCode() {
 const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 let randomCode = '';
 for (let i = 0; i < 5; i++) {
@@ -53,3 +62,26 @@ for (let i = 0; i < 5; i++) {
 }
 return randomCode;
 }
+
+export async function generateUniqueRandomGameCode(maxAttempts = 5) {
+    let randomCode;
+    let exists = true;
+    let attempts = 0;
+
+    while (exists && attempts < maxAttempts) {
+      randomCode = generateRandomCode()
+      try {
+        exists = await checkGameIdExists(randomCode); 
+      } catch (error) {
+        console.error("Error in generateUniqueRandomCode:", error);
+        return null; 
+      }
+      attempts++;
+    }
+  
+    if (exists) {
+      throw new Error("Unable to generate a unique game ID after maximum attempts");
+    }
+  
+    return randomCode;
+  }
