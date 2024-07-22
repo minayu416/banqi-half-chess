@@ -1,0 +1,43 @@
+{
+    "lang": "en",
+    "head": {
+      "title": "Banqi Chinese Chess",
+      "description": "A Banqi Chinese Chess online service developed by Mina.",
+      "url": ""
+    },
+    "home": {
+        "single": "Single Mode",
+        "online": "Online Mode",
+        "notice": "Notice: please login google account before start online game.",
+        "login": "Login",
+        "newGame": "New Game",
+        "joinGame": "Join Game",
+        "back": "Back"
+    }, 
+    "game":{
+        "meName": "Me",
+        "opponentName": "Oppo.",
+        "eventMessage": {
+            "turnOn": "Turned on",
+            "Moved": "Moved",
+            "toEmptyPlace": "to empty place",
+            "setColor": "The color decided by the first attacker.",
+            "incorrectSide": "You took incorrect side chess.",
+            "isNotYourTurn": "This is not your turn!",
+            "isNotTurned": "the chess hasn't be turned!",
+            "cantJumpOverStep": "Can not jump over 1 step!",
+            "cantEactSameColor": "You can not eat same color chess.",
+            "cantMoveOverStep": "Chess can not move over 1 step.",
+            "kingCantEatSolder": "King can not eat solder.",
+            "cantEat": "can not eat"
+          },
+        "chatButton": "SEND"
+    },
+    "instruction": {
+        "rule1": "Only the turned chess can be moved, and only the turned chess can be attacked.",
+        "rule2": "Each chess can only move one adjacent square, and the cannon (砲/炮) can move one square, but it needs jumping to attack (allow only 1 chess between cannon and the chess you want to attack).",
+        "rule3": "Restraint relationship: King (將/帥) -> Advisor (士/仕) -> Elephant (象/相) -> Chariot (車/俥) -> Horse (馬/傌) -> Cannon (砲/炮) -> Soldier (兵/卒) -> King (將/帥).",
+        "rule4": "Solders (兵/卒) only can eat Solders (兵/卒) and King (將/帥). ",
+        "rule5": "King (將/帥) can not eat Solder (兵/卒). 將不能吃兵、帥不能吃卒"
+      }
+}

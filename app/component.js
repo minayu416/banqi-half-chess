@@ -15,7 +15,7 @@ export function HeaderBase({children}){
     );
 }
 
-export function GameHeader({gameId, setShowChatRoom, setShowInstructions, menuRef}) {
+export function GameHeader({lng, gameId, setShowChatRoom, setShowInstructions, menuRef}) {
 
     const router = useRouter();
 
@@ -24,7 +24,7 @@ export function GameHeader({gameId, setShowChatRoom, setShowInstructions, menuRe
       };
 
       const backHome = () => {
-        router.push(`/`);
+        router.push(`/${lng}/`);
       };
 
     const showInstructions = () => {
