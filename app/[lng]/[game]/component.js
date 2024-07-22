@@ -1,3 +1,54 @@
+export const i18nChessMapping = {
+    "en": {
+        "b": "Black",
+        "r": "Red",
+        "chess": {
+            "b": {
+                "king": "King (將)",
+                "advisor": "Advisor (士)",
+                "elephant": "Elephant (象)",
+                "chariot": "Chariot (車)",
+                "horse": "Horse (馬)",
+                "cannon": "Cannon (砲)",
+                "soldier": "Soldier (卒)"
+            },
+            "r": {
+                "king": "King (帥)",
+                "advisor": "Advisor (仕)",
+                "elephant": "Elephant (相)",
+                "chariot": "Chariot (俥)",
+                "horse": "Horse (傌)",
+                "cannon": "Cannon (炮)",
+                "soldier": "Soldier (兵)"
+            }
+        }
+    },
+    "tw": {
+        "b": "黑方",
+        "r": "紅方",
+        "chess": {
+            "b": {
+                "king": "將",
+                "advisor": "士",
+                "elephant": "象",
+                "chariot": "車",
+                "horse": "馬",
+                "cannon": "砲",
+                "soldier": "卒"
+            },
+            "r": {
+                "king": "帥",
+                "advisor": "仕",
+                "elephant": "相",
+                "chariot": "俥",
+                "horse": "傌",
+                "cannon": "炮",
+                "soldier": "兵"
+            }
+        }
+    }
+}
+
 export const chessStyle = {
     "b": {
         "color": "#000000",

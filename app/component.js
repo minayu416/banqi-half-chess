@@ -15,7 +15,30 @@ export function HeaderBase({children}){
     );
 }
 
-export function GameHeader({gameId, setShowChatRoom, setShowInstructions, menuRef}) {
+export function HomeHeader({lng}){
+  const router = useRouter(lng);
+
+  const switchLanguage = () => {
+    if (lng==="en"){
+      router.push(`/tw/`);
+    } else {
+      router.push(`/en/`);
+    }
+    
+  };
+
+  return (
+    <>
+            <div className="absolute top-0 right-0">
+                <div className='px-3 py-2 lg:px-5 lg:py-4 font-bold text-xl cursor-pointer' onClick={() => switchLanguage()} style={{color: "#F1D6AE"}}>
+                  {lng==="en" ? "中" : "EN"}
+                </div>
+            </div>
+    </>
+);
+}
+
+export function GameHeader({lng, gameId, setShowChatRoom, setShowInstructions, menuRef}) {
 
     const router = useRouter();
 
@@ -24,7 +47,7 @@ export function GameHeader({gameId, setShowChatRoom, setShowInstructions, menuRe
       };
 
       const backHome = () => {
-        router.push(`/`);
+        router.push(`/${lng}/`);
       };
 
     const showInstructions = () => {

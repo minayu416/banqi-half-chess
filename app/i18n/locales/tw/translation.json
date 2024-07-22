@@ -1,0 +1,45 @@
+{
+    "lang": "tw",
+    "head": {
+      "title": "Miri Robot Fortune-Teller",
+      "description": "Miri is a robot fortune-teller who enables users to perform divination online, there are many different divination methods: Runes, Tarot cards, Lenormand, Poe, Nature Whisper and Wisdom divination. Miri will guide you through the process and provide interpretations of the cards to help resolve your confusion and answer your questions.",
+      "url": ""
+    },
+    "home": {
+      "single": "單機模式",
+      "online": "連線模式",
+      "notice": "注意：遊玩遊戲須先登入Google帳號",
+      "login": "登入",
+      "newGame": "新遊戲",
+      "joinGame": "加入遊戲",
+      "back": "返回"
+
+    }, 
+    "game":{
+      "meName": "我方",
+      "opponentName": "對手",
+      "eventMessage": {
+        "turnOn": "翻開",
+        "Moved": "移動",
+        "toEmptyPlace": "到空位",
+        "setColor": "先攻方選定顏色！",
+        "incorrectSide": "你拿錯陣營的棋子了！",
+        "isNotYourTurn": "還沒輪到你下棋。",
+        "isNotTurned": "這個棋子還沒被翻開！",
+        "cantJumpOverStep": "不能跳超過一格棋盤。",
+        "cantEactSameColor": "你不能吃同一陣營的棋子。",
+        "cantMoveOverStep": "棋子不能移動超過一格。",
+        "kingCantEatSolder": "將不能吃兵、帥不能吃卒。",
+        "cantEat": "不能吃"
+      },
+      "chatButton": "送出"
+
+    },
+    "instruction": {
+      "rule1": "翻開的棋才能移動，只能攻擊翻開的棋。",
+      "rule2": "每個棋只能移動相鄰一格，砲/炮移動一格，但需要跳棋攻擊，與欲攻擊的棋中間必須只能存在一顆棋。",
+      "rule3": "剋制關係：將->士->象->車->馬->炮->兵->將",
+      "rule4": "兵只能吃卒或將，卒只能吃兵或帥",
+      "rule5": "將不能吃兵、帥不能吃卒"
+    }
+}

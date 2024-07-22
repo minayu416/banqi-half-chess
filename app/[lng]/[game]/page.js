@@ -4,15 +4,17 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 
 import { useRouter } from "next/navigation";
 
-import { auth, db, createOrJoinGame, updateSide, updateSequence, updatePosition, fetchLatestPosition, writeSendMessage, fetchNewMessages } from '../firebase'
+import { useTranslation } from '../../i18n/client'
+
+import { auth, db, createOrJoinGame, updateSide, updateSequence, updatePosition, fetchLatestPosition, writeSendMessage, fetchNewMessages } from '../../firebase'
 
 import { doc, onSnapshot } from "firebase/firestore"
 
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 
-import { chessStyle, ChessShuffleHandler } from "./component"
+import { i18nChessMapping, chessStyle, ChessShuffleHandler } from "./component"
 
-import { HeaderBase, GameHeader } from "../component";
+import { HeaderBase, GameHeader } from "../../component";
 import { ChessRules } from './rules';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -97,11 +99,13 @@ function DroppableCell(props) {
 
 }
 
-function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSequence, setEventInfo }) {
+function Board({lng, gameId, currentUser, opponent, side, setSide, sequence, changeSequence, setEventInfo }) {
   const [shuffledChess, setShuffledChess] = useState([]);
   const showUserSide = gameId === "single" ? currentUser.displayName : currentUser.uid
   const showOpponentSide = gameId === "single" ? opponent.displayName : opponent.uid
   // const [eventInfo, setEventInfo] = useState('<>');
+
+  const { t } = useTranslation(lng)
 
   useEffect(() => {
       // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
@@ -123,7 +127,7 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
 
   function emitChange(activeData, overData){
     const updatedChess = [...shuffledChess];
-    const msg = overData.chess === '.' ? `Moved [${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''} to empty place` : `[${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''} -> [${String(chessStyle[overData.chess.sn[0]].word) ?? ''}] ${String(overData.chess.chineseName) ?? ''}`
+    const msg = overData.chess === '.' ? `${t('game.eventMessage.Moved')} [${String(i18nChessMapping[lng][activeData.chess.sn[0]]) ?? ''}] ${String(i18nChessMapping[lng].chess[activeData.chess.sn[0]][activeData.chess.type]) ?? ''} ${t('game.eventMessage.toEmptyPlace')}` : `[${String(i18nChessMapping[lng][activeData.chess.sn[0]]) ?? ''}] ${String(i18nChessMapping[lng].chess[activeData.chess.sn[0]][activeData.chess.type]) ?? ''} -> [${String(i18nChessMapping[lng][overData.chess.sn[0]]) ?? ''}] ${String(i18nChessMapping[lng].chess[overData.chess.sn[0]][overData.chess.type]) ?? ''}`
     updatedChess[activeData.position] = '.';
     updatedChess[overData.position] = activeData.chess;
     setShuffledChess(updatedChess);
@@ -147,7 +151,7 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
 
     if (gameId !== "single"){
       if (currentUser.uid !== sequence){
-        setEventInfo("This is not your turn");
+        setEventInfo(t('game.eventMessage.isNotYourTurn'));
         return;
       }
     }
@@ -157,7 +161,7 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
       const turnedChess = {...activeData.chess}
       turnedChess.turned = true;
       updatedChess[activeData.position] = turnedChess;
-      const msg = `Turned on [${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''}`
+      const msg = `${t('game.eventMessage.turnOn')} [${String(i18nChessMapping[lng][activeData.chess.sn[0]]) ?? ''}] ${String(i18nChessMapping[lng].chess[activeData.chess.sn[0]][activeData.chess.type]) ?? ''}`
       setShuffledChess(updatedChess);
       changeSequence(currentUser.uid);
       // setEventInfo(`Turned on [${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''}`);
@@ -174,7 +178,7 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
         }
 
         setSide(newSide)
-        setEventInfo('先攻方選定顏色');
+        setEventInfo(t('game.eventMessage.setColor'));
 
         if (gameId !== "single"){
           updateSide(gameId, newSide)
@@ -188,13 +192,13 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
     }
 
     if(activeData.chess.sn[0] !== side[sequence]){
-      setEventInfo('You took incorrect side chess.');
+      setEventInfo(t('game.eventMessage.incorrectSide'));
       return;
     }
 
     if (overData.chess !== '.'){
       if (!overData.chess.turned){
-        setEventInfo('the chess hasn\'t be turned');
+        setEventInfo(t('game.eventMessage.isNotTurned'));
         return;
       }
     }
@@ -210,14 +214,14 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
           emitChange(activeData, overData)
           return;
       } else {
-        setEventInfo('Can not jump over 1 step');
+        setEventInfo(t('game.eventMessage.cantJumpOverStep'));
         return;
       }
     }
 
     // 同個棋子不能吃
     if (rules.isSameSide(activeData, overData)) {
-      setEventInfo('You can not eat same color chess');
+      setEventInfo(t('game.eventMessage.cantEactSameColor'));
       return;
     }
 
@@ -291,7 +295,7 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
 
     // Except cannon, other chess can not move over 1 step.
     if (rules.isOverStep(activeData, overData)){
-      setEventInfo('Chess can not move over 1 step');
+      setEventInfo(t('game.eventMessage.cantMoveOverStep'));
       return;
     }
     if (rules.isSolderCanCommit(activeData, overData)){
@@ -299,7 +303,7 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
       return;
     }
     if (rules.isKingCanCommit(activeData, overData)){
-      setEventInfo('King can not eat solder');
+      setEventInfo(t('game.eventMessage.kingCantEatSolder'));
       return;
     }
     if (rules.canCommit(activeData, overData)){
@@ -308,7 +312,7 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
     }
 
     if (rules.canNotCommit(activeData, overData)){
-      setEventInfo(`[${String(chessStyle[activeData.chess.sn[0]].word) ?? ''}] ${String(activeData.chess.chineseName) ?? ''} can not eat [${String(chessStyle[overData.chess.sn[0]].word) ?? ''}] ${String(overData.chess.chineseName) ?? ''}`);
+      setEventInfo(`[${String(i18nChessMapping[lng][activeData.chess.sn[0]]) ?? ''}] ${String(i18nChessMapping[lng].chess[activeData.chess.sn[0]][activeData.chess.type]) ?? ''} ${t('game.eventMessage.cantEat')} [${String(i18nChessMapping[lng][overData.chess.sn[0]]) ?? ''}] ${String(i18nChessMapping[lng].chess[overData.chess.sn[0]][overData.chess.type]) ?? ''}`);
       return;
     }
 
@@ -341,12 +345,16 @@ function Board({gameId, currentUser, opponent, side, setSide, sequence, changeSe
     )
 }
 
-function GameSection({setEventInfo, eventInfo, gameId}){
+function GameSection({setEventInfo, eventInfo, params}){
     const [side, setSide] = useState(null);
     const [sequence, setSequence] = useState(null);
 
     const [currentUser, setCurrentUser] = useState({});
     const [opponent, setOpponent] = useState({})
+
+    const gameId = params.game
+    const lng = params.lng
+    const { t } = useTranslation(lng)
 
     const showUserSide = gameId === "single" ? currentUser.displayName : currentUser.uid
     const showOpponentSide = gameId === "single" ? opponent.displayName : opponent.uid
@@ -354,8 +362,8 @@ function GameSection({setEventInfo, eventInfo, gameId}){
     useEffect(() => {
       if (gameId==="single"){
         // TODO: single 就存在localStorage
-        const me = {"uid": "@single22336", "displayName": "Me"}
-        const opponentSide = {"uid": "@single18732", "displayName": "Oppo."} 
+        const me = {"uid": "@single22336", "displayName": t('game.meName')}
+        const opponentSide = {"uid": "@single18732", "displayName": t('game.opponentName')} 
         setCurrentUser(me)
         setOpponent(opponentSide)
         setSequence(me.displayName);
@@ -457,7 +465,7 @@ function GameSection({setEventInfo, eventInfo, gameId}){
           <div className='w-full h-full border rounded-md p-3' style={{backgroundColor: "#96602E", borderColor: "#C18859"}}>
             <div className="w-full h-full border-2 rounded-md" style={{borderColor: "#3C3B3B"}}>
               {opponent.uid &&
-                <Board gameId={gameId} currentUser={currentUser} opponent={opponent} side={side} setSide={setSide} sequence={sequence} changeSequence={changeSequence} setEventInfo={setEventInfo} />
+                <Board lng={lng} gameId={gameId} currentUser={currentUser} opponent={opponent} side={side} setSide={setSide} sequence={sequence} changeSequence={changeSequence} setEventInfo={setEventInfo} />
               }
               </div>
           </div>
@@ -527,7 +535,8 @@ function ChatMessage(props) {
   </>)
 }
 
-function ChatRoom({gameId}){
+function ChatRoom({lng, gameId}){
+  const { t } = useTranslation(lng)
   const dummy = useRef();
 
   const [formValue, setFormValue] = useState('');
@@ -563,17 +572,17 @@ function ChatRoom({gameId}){
   </div>
     <form onSubmit={sendMessage} className='flex w-full border-t absolute inset-x-0 bottom-0 rounded-b-md' style={{backgroundColor: "#FFF3E8", borderColor: "#B59376"}}>
       <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="Type message..." className="ml-4 my-3 py-2 px-3 w-2/3 placeholder:text-gray-600 rounded-md text-black text-sm" />
-      <button type="submit" disabled={!formValue} className="m-auto px-3 py-2 rounded-lg text-xs font-bold border" style={{backgroundColor: "#FFFBF8", borderColor: "#B59376", color: "#96602E"}}>SEND</button>
+      <button type="submit" disabled={!formValue} className="m-auto px-3 py-2 rounded-lg text-xs font-bold border" style={{backgroundColor: "#FFFBF8", borderColor: "#B59376", color: "#96602E"}}>{t('game.chatButton')}</button>
     </form>
   </div>
  )
 }
 
-function Sidebar({gameId, extendChatRoomRef}){
+function Sidebar({lng, gameId, extendChatRoomRef}){
   return (
     <>
     <div ref={extendChatRoomRef} className='absolute h-full w-1/3 p-3 inset-y-0 right-0 lg:hidden border transition-transform ease-in-out duration-300' style={{backgroundColor: "#B59376", borderColor: "#96602E", zIndex: 3}}>
-      <ChatRoom gameId={gameId}/>
+      <ChatRoom lng={lng} gameId={gameId}/>
       </div>
     </>
   )
@@ -581,7 +590,8 @@ function Sidebar({gameId, extendChatRoomRef}){
 
 
 
-function Instructions({setShowInstructions}){
+function Instructions({lng, setShowInstructions}){
+  const { t } = useTranslation(lng)
 
   const closeInstructions = () => {
     setShowInstructions(false);
@@ -590,13 +600,13 @@ function Instructions({setShowInstructions}){
   return (
     <>
     <div className='absolute w-full h-full' style={{backgroundColor: "rgba(0, 0, 0, 0.6)", zIndex: 4}}></div>
-    <div className='absolute h-3/5 w-3/5 lg:h-2/6 xl:w-2/5 2xl:w-2/5 top-[10%] left-[25%] rounded-md border-4 p-4' style={{backgroundColor: "#F1D6AE", borderColor: "#B59376", zIndex: 5}}>
+    <div className='absolute h-4/5 w-4/6 text-md lg:h-2/6 xl:w-3/6 2xl:w-2/5 top-[10%] left-[20%] rounded-md border-4 p-4' style={{backgroundColor: "#F1D6AE", borderColor: "#B59376", zIndex: 5}}>
     <div className='absolute top-0 right-0 p-1 cursor-pointer' onClick={() => closeInstructions()}><FontAwesomeIcon icon={faXmark} size="2xl" style={{color: "#B59376"}}/></div>
-    <p className="font-bold" style={{ color: "#96602E" }}>翻開的棋才能移動，只能攻擊翻開的棋。</p>
-      <p className="font-bold" style={{ color: "#96602E" }}>每個棋只能移動相鄰一格，砲/炮移動一格，但需要跳棋攻擊，與欲攻擊的棋中間必須只能存在一顆棋。</p>
-      <p className="font-bold" style={{ color: "#96602E" }}>剋制關係：將-{`>`}士-{`>`}象-{`>`}車-{`>`}馬-{`>`}炮-{`>`}兵-{`>`}將</p>
-      <p className="font-bold" style={{ color: "#96602E" }}>兵只能吃卒或將，卒只能吃兵或帥</p>
-      <p className="font-bold" style={{ color: "#96602E" }}>將不能吃兵、帥不能吃卒</p>
+    <p className="font-bold" style={{ color: "#96602E" }}>1. {t('instruction.rule1')}</p>
+      <p className="font-bold" style={{ color: "#96602E" }}>2. {t('instruction.rule2')}</p>
+      <p className="font-bold" style={{ color: "#96602E" }}>3. {t('instruction.rule3')}</p>
+      <p className="font-bold" style={{ color: "#96602E" }}>4. {t('instruction.rule4')}</p>
+      <p className="font-bold" style={{ color: "#96602E" }}>5. {t('instruction.rule5')}</p>
       </div>
 
     </>
@@ -628,6 +638,8 @@ function IsNotLoginMessage(){
 
 export default function Page({ params }) {
 
+  const router = useRouter();
+
   const [eventInfo, setEventInfo] = useState('<>');
 
   const extendChatRoomRef = useRef(null);
@@ -645,6 +657,9 @@ export default function Page({ params }) {
     };
 
   useEffect(() => {
+    if (!['tw', 'en'].includes(params.lng)){
+      router.push(`/`);
+    }
     auth.authStateReady().then(() => {
       if (auth.currentUser) {
         setIsGettingAuth(true);
@@ -660,19 +675,21 @@ export default function Page({ params }) {
   return (
       <>
       <HeaderBase>
-        <GameHeader gameId={params.game} setShowChatRoom={setShowChatRoom} setShowInstructions={setShowInstructions} menuRef={menuRef}/>
+        <GameHeader lng={params.lng} gameId={params.game} setShowChatRoom={setShowChatRoom} setShowInstructions={setShowInstructions} menuRef={menuRef}/>
         </HeaderBase>
-        {showInstructions && <Instructions setShowInstructions={setShowInstructions}/>}
-        {params.game !== "single" && showChatRoom && <Sidebar gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>}
+        {showInstructions && <Instructions lng={params.lng} setShowInstructions={setShowInstructions}/>}
+        {params.game !== "single" && showChatRoom && <Sidebar lng={params.lng} gameId={params.game} extendChatRoomRef={extendChatRoomRef}/>}
         <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
-        { (params.game !== "single" && isGettingAuth) ?
-          <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} gameId={params.game}/>
-          : <>
-            <IsNotLoginMessage/>
+        { params.game !== "single" && isGettingAuth &&
+          <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} params={params}/>
+        }
+        { params.game !== "single" && !isGettingAuth && 
+          <>
+            <IsNotLoginMessage />
           </>
         }
         { params.game === "single" &&
-          <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} gameId={params.game}/>
+          <GameSection setEventInfo={setEventInfo} eventInfo={eventInfo} params={params}/>
         }
           { params.game === "single" ? 
           <>
@@ -684,7 +701,7 @@ export default function Page({ params }) {
           {isGettingAuth &&
             <div className="hidden lg:flex flex-col w-1/3 justify-center items-center">
             <div className='mb-2 text-md font-bold' style={{color: "#96602E"}}>{eventInfo}</div>
-              <ChatRoom gameId={params.game}/>
+              <ChatRoom lng={params.lng} gameId={params.game}/>
               </div>
             }
           </>
