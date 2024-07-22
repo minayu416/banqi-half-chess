@@ -9,7 +9,7 @@ import { auth, signInWithGoogle, SignOut } from "../firebase";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 
-import { HeaderBase, generateUniqueRandomGameCode } from "../component";
+import { HeaderBase, HomeHeader, generateUniqueRandomGameCode } from "../component";
 
 
 
@@ -109,7 +109,9 @@ export default function Home({ params: { lng } }) {
 
   return (
     <main className="">
-      <HeaderBase/>
+      <HeaderBase>
+        <HomeHeader lng={lng} />
+      </HeaderBase>
       <div className="mt-16 lg:mt-32 flex justify-center items-center">
       <div className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-6 px-2 lg:px-8 lg:py-8 drop-shadow-md" style={{backgroundColor: "#9C836A", borderColor: "#B59376"}}>
       <p className="text-2xl md:text-3xl font-bold text-center mb-2 lg:mb-2" style={{color: "#FFF3E8"}}>暗棋</p>
