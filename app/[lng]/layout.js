@@ -29,7 +29,7 @@ export async function generateMetadata({ params: { lng } }) {
     siteName: t('head.title'),
     images: [
       {
-        url: 'https://banqi-half-chess.vercel.app/static/favicon.jpg', // Must be an absolute URL
+        url: 'https://minayu.site/img/portfolio/banqi-small-icon.png', // Must be an absolute URL
         width: 800,
         height: 600,
         alt: 'Banqi Chinese Chess',
@@ -45,7 +45,7 @@ export async function generateMetadata({ params: { lng } }) {
     description: t('head.description'),
     creator: t('head.author'),
     images: {
-      url: 'https://banqi-half-chess.vercel.app/static/favicon.jpg',
+      url: 'https://minayu.site/img/portfolio/banqi-small-icon.png',
       alt: 'Banqi Chinese Chess',
     }
 }
