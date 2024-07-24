@@ -2,8 +2,11 @@
     "lang": "en",
     "head": {
       "title": "Banqi Chinese Chess",
-      "description": "A Banqi Chinese Chess online service developed by Mina.",
-      "url": ""
+      "description": "A Banqi Chinese Chess online service includes single and online mode, developed by Mina.",
+      "url": "https://banqi-half-chess.vercel.app/en",
+      "author": "Ming-Jung YU",
+      "author2": "@Mina Influence",
+      "authorURL": "https://www.minayu.site/en/"
     },
     "home": {
         "single": "Single Mode",
@@ -38,6 +41,6 @@
         "rule2": "Each chess can only move one adjacent square, and the cannon (砲/炮) can move one square, but it needs jumping to attack (allow only 1 chess between cannon and the chess you want to attack).",
         "rule3": "Restraint relationship: King (將/帥) -> Advisor (士/仕) -> Elephant (象/相) -> Chariot (車/俥) -> Horse (馬/傌) -> Cannon (砲/炮) -> Soldier (兵/卒) -> King (將/帥).",
         "rule4": "Solders (兵/卒) only can eat Solders (兵/卒) and King (將/帥). ",
-        "rule5": "King (將/帥) can not eat Solder (兵/卒). 將不能吃兵、帥不能吃卒"
+        "rule5": "King (將/帥) can not eat Solder (兵/卒). "
       }
 }
