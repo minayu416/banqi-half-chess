@@ -1,9 +1,12 @@
 {
-    "lang": "tw",
+    "lang": "zh-TW",
     "head": {
-      "title": "Miri Robot Fortune-Teller",
-      "description": "Miri is a robot fortune-teller who enables users to perform divination online, there are many different divination methods: Runes, Tarot cards, Lenormand, Poe, Nature Whisper and Wisdom divination. Miri will guide you through the process and provide interpretations of the cards to help resolve your confusion and answer your questions.",
-      "url": ""
+      "title": "象棋暗棋 Banqi Chinese Chess",
+      "description": "包含單人模式及線上連線模式的暗棋網站。",
+      "url": "https://banqi-half-chess.vercel.app/tw",
+      "author": "Ming-Jung YU",
+      "author2": "月水瓶 @Mina 的人生實驗室",
+      "authorURL": "https://www.minayu.site"
     },
     "home": {
       "single": "單機模式",
@@ -38,8 +41,8 @@
     "instruction": {
       "rule1": "翻開的棋才能移動，只能攻擊翻開的棋。",
       "rule2": "每個棋只能移動相鄰一格，砲/炮移動一格，但需要跳棋攻擊，與欲攻擊的棋中間必須只能存在一顆棋。",
-      "rule3": "剋制關係：將->士->象->車->馬->炮->兵->將",
-      "rule4": "兵只能吃卒或將，卒只能吃兵或帥",
-      "rule5": "將不能吃兵、帥不能吃卒"
+      "rule3": "剋制關係：將->士->象->車->馬->炮->兵->將。",
+      "rule4": "兵只能吃卒或將，卒只能吃兵或帥。",
+      "rule5": "將不能吃兵、帥不能吃卒。"
     }
 }
