@@ -136,7 +136,6 @@ function Board({
   setEventInfo,
 }) {
   const [shuffledChess, setShuffledChess] = useState([]);
-  console.log(shuffledChess);
   const showUserSide =
     gameId === "single" ? currentUser.displayName : currentUser.uid;
   const showOpponentSide =

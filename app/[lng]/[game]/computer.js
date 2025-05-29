@@ -1,306 +1,10 @@
 // Single Mode Computer
 
-// TODO: 先用mockData開發，完成後刪掉
-const mockData = [
-  {
-    position: 0,
-    sn: "r-soldier-0",
-    turned: false,
-    color: "#CC0000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "兵",
-  },
-  {
-    position: 1,
-    sn: "r-cannon-1",
-    turned: true,
-    color: "#CC0000",
-    type: "cannon",
-    weight: 4,
-    chineseName: "炮",
-  },
-  {
-    position: 2,
-    sn: "b-elephant-1",
-    turned: false,
-    color: "#000000",
-    type: "elephant",
-    weight: 7,
-    chineseName: "象",
-  },
-  {
-    position: 3,
-    sn: "r-chariot-0",
-    turned: true,
-    color: "#CC0000",
-    type: "chariot",
-    weight: 6,
-    chineseName: "俥",
-  },
-  {
-    position: 4,
-    sn: "b-elephant-0",
-    turned: false,
-    color: "#000000",
-    type: "elephant",
-    weight: 7,
-    chineseName: "象",
-  },
-  {
-    position: 5,
-    sn: "r-king-0",
-    turned: true,
-    color: "#CC0000",
-    type: "king",
-    weight: 9,
-    chineseName: "帥",
-  },
-  {
-    position: 6,
-    sn: "r-soldier-1",
-    turned: false,
-    color: "#CC0000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "兵",
-  },
-  {
-    position: 7,
-    sn: "r-elephant-1",
-    turned: false,
-    color: "#CC0000",
-    type: "elephant",
-    weight: 7,
-    chineseName: "相",
-  },
-  {
-    position: 8,
-    sn: "b-horse-1",
-    turned: true,
-    color: "#000000",
-    type: "horse",
-    weight: 5,
-    chineseName: "馬",
-  },
-  {
-    position: 9,
-    sn: "b-cannon-0",
-    turned: false,
-    color: "#000000",
-    type: "cannon",
-    weight: 4,
-    chineseName: "砲",
-  },
-  {
-    position: 10,
-    sn: "b-king-0",
-    turned: true,
-    color: "#000000",
-    type: "king",
-    weight: 9,
-    chineseName: "將",
-  },
-  ".",
-  {
-    position: 11,
-    sn: "b-soldier-4",
-    turned: true,
-    color: "#000000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "卒",
-  },
-  {
-    position: 13,
-    sn: "r-chariot-1",
-    turned: true,
-    color: "#CC0000",
-    type: "chariot",
-    weight: 6,
-    chineseName: "俥",
-  },
-  {
-    position: 14,
-    sn: "b-advisor-1",
-    turned: false,
-    color: "#000000",
-    type: "advisor",
-    weight: 8,
-    chineseName: "士",
-  },
-  {
-    position: 15,
-    sn: "r-elephant-0",
-    turned: true,
-    color: "#CC0000",
-    type: "elephant",
-    weight: 7,
-    chineseName: "相",
-  },
-  {
-    position: 16,
-    sn: "b-soldier-2",
-    turned: false,
-    color: "#000000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "卒",
-  },
-  {
-    position: 17,
-    sn: "r-soldier-2",
-    turned: true,
-    color: "#CC0000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "兵",
-  },
-  {
-    position: 18,
-    sn: "b-soldier-3",
-    turned: false,
-    color: "#000000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "卒",
-  },
-  {
-    position: 19,
-    sn: "b-soldier-0",
-    turned: true,
-    color: "#000000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "卒",
-  },
-  {
-    position: 20,
-    sn: "b-horse-0",
-    turned: false,
-    color: "#000000",
-    type: "horse",
-    weight: 5,
-    chineseName: "馬",
-  },
-  {
-    position: 21,
-    sn: "r-cannon-0",
-    turned: true,
-    color: "#CC0000",
-    type: "cannon",
-    weight: 4,
-    chineseName: "炮",
-  },
-  {
-    position: 22,
-    sn: "r-horse-1",
-    turned: true,
-    color: "#CC0000",
-    type: "horse",
-    weight: 5,
-    chineseName: "傌",
-  },
-  ".",
-  {
-    position: 24,
-    sn: "b-chariot-0",
-    turned: true,
-    color: "#000000",
-    type: "chariot",
-    weight: 6,
-    chineseName: "車",
-  },
-  {
-    position: 25,
-    sn: "b-cannon-1",
-    turned: true,
-    color: "#000000",
-    type: "cannon",
-    weight: 4,
-    chineseName: "砲",
-  },
-  {
-    position: 26,
-    sn: "b-chariot-1",
-    turned: false,
-    color: "#000000",
-    type: "chariot",
-    weight: 6,
-    chineseName: "車",
-  },
-  {
-    position: 27,
-    sn: "r-advisor-0",
-    turned: true,
-    color: "#CC0000",
-    type: "advisor",
-    weight: 8,
-    chineseName: "仕",
-  },
-  {
-    position: 28,
-    sn: "b-soldier-1",
-    turned: false,
-    color: "#000000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "卒",
-  },
-  {
-    position: 29,
-    sn: "r-soldier-4",
-    turned: true,
-    color: "#CC0000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "兵",
-  },
-  {
-    position: 30,
-    sn: "r-advisor-1",
-    turned: true,
-    color: "#CC0000",
-    type: "advisor",
-    weight: 8,
-    chineseName: "仕",
-  },
-  {
-    position: 23,
-    sn: "b-advisor-0",
-    turned: true,
-    color: "#000000",
-    type: "advisor",
-    weight: 8,
-    chineseName: "士",
-  },
-];
-
-const mockActiveData = {
-  sn: "r-soldier-3",
-  position: 31,
-  chess: {
-    position: 31,
-    sn: "r-soldier-3",
-    turned: true,
-    color: "#CC0000",
-    type: "soldier",
-    weight: 1,
-    chineseName: "兵",
-  },
-};
-// "空格"
-const mockOverData = {
-  position: 23,
-  chess: ".",
-};
-
 const leftEdge = [0, 8, 16, 24];
 const rightEdge = [7, 15, 23, 31];
+const cannonLeftEdge = [0, 8, 16, 24, 1, 9, 17, 25];
+const cannonRightEdge = [7, 15, 23, 31, 6, 14, 22, 30];
 
-// TODO: 他會先取得玩家更新後的棋盤
-// TODO: 將可以走的部署全部render 成一個 list
-// TODO: 隨機取一步，然後下，然後記得要改成玩家
 // TODO: 設計一個function當判斷了無可以走，根據最後吃得子跟誰吃得多算分數給win跟lose
 
 const isLegalMove = () => {};
@@ -313,7 +17,6 @@ export const easyComputer = (
   emitChange
 ) => {
   let legalMoves = [];
-  console.log(shuffledChess);
 
   for (let i = 0; i < shuffledChess.length; i++) {
     const fromChess = shuffledChess[i];
@@ -336,12 +39,8 @@ export const easyComputer = (
 
     // 先判斷是否回 . 再判斷是否為 turned
     if (!fromChess.turned) {
-      if (!activeData.sn) console.log(i);
       legalMoves.push([activeData, null]);
-    }
-
-    // TODO: 是砲就額外處理
-    if (rules.isCannon(activeData)) {
+      continue;
     }
 
     // 計算可移動範圍
@@ -395,9 +94,7 @@ export const easyComputer = (
 
       // 判斷目標位置是否為空
       if (rules.isMoveToEmptyPlace(overData)) {
-        if (!activeData.sn) console.log(i, move);
         legalMoves.push([activeData, overData]);
-        return;
       }
       // 不能吃同一方
       if (rules.isSameSide(activeData, overData)) return;
@@ -405,21 +102,129 @@ export const easyComputer = (
       if (!overData.turned) return;
       // 如果是兵且對方是將，可以吃
       if (rules.isSolderCanCommit(activeData, overData)) {
-        if (!activeData.sn) console.log(i, move);
         legalMoves.push([activeData, overData]);
         return;
       }
       if (rules.isKingCanCommit(activeData, overData)) {
-        if (!activeData.sn) console.log(i, move);
         legalMoves.push([activeData, overData]);
         return;
       }
 
-      if (rules.canCommit(activeData, overData)) {
-        if (!activeData.sn) console.log(i, move);
-
+      if (
+        rules.canCommit(activeData, overData) &&
+        !rules.isCannon(activeData)
+      ) {
         legalMoves.push([activeData, overData]);
         return;
+      }
+
+      // 是砲就額外處理
+      if (rules.isCannon(activeData)) {
+        if (position / 7 < 2) {
+          const veticalJump = position + 16;
+          const middleChess = position + 8;
+          if (
+            shuffledChess[middleChess] !== "." &&
+            shuffledChess[veticalJump] !== "." &&
+            shuffledChess[veticalJump].sn[0] !== computerSide
+          ) {
+            overData = {
+              sn: shuffledChess[veticalJump].sn,
+              position: shuffledChess[veticalJump].position,
+              chess: {
+                ...shuffledChess[veticalJump],
+              },
+            };
+            legalMoves.push([activeData, overData]);
+          }
+        }
+        if (position / 7 > 1) {
+          const veticalJump = position - 16;
+          const middleChess = position - 8;
+          if (
+            shuffledChess[middleChess] !== "." &&
+            shuffledChess[veticalJump] !== "." &&
+            shuffledChess[veticalJump].sn[0] !== computerSide
+          ) {
+            overData = {
+              sn: shuffledChess[veticalJump].sn,
+              position: shuffledChess[veticalJump].position,
+              chess: {
+                ...shuffledChess[veticalJump],
+              },
+            };
+            legalMoves.push([activeData, overData]);
+          }
+        }
+
+        if (cannonLeftEdge.includes(position)) {
+          const horizontalJump = position + 2;
+          const middleChess = position + 1;
+          if (
+            shuffledChess[middleChess] !== "." &&
+            shuffledChess[horizontalJump] !== "." &&
+            shuffledChess[horizontalJump].sn[0] !== computerSide
+          ) {
+            overData = {
+              sn: shuffledChess[horizontalJump].sn,
+              position: shuffledChess[horizontalJump].position,
+              chess: {
+                ...shuffledChess[horizontalJump],
+              },
+            };
+            legalMoves.push([activeData, overData]);
+          }
+        } else if (cannonRightEdge.includes(position)) {
+          const horizontalJump = position - 2;
+          const middleChess = position - 1;
+          if (
+            shuffledChess[middleChess] !== "." &&
+            shuffledChess[horizontalJump] !== "." &&
+            shuffledChess[horizontalJump].sn[0] !== computerSide
+          ) {
+            overData = {
+              sn: shuffledChess[horizontalJump].sn,
+              position: shuffledChess[horizontalJump].position,
+              chess: {
+                ...shuffledChess[horizontalJump],
+              },
+            };
+            legalMoves.push([activeData, overData]);
+          }
+        } else {
+          const leftJump = position - 2;
+          const leftMiddleChess = position - 1;
+          const rightJump = position + 2;
+          const rightMiddleChess = position + 1;
+          if (
+            shuffledChess[leftMiddleChess] !== "." &&
+            shuffledChess[leftJump] !== "." &&
+            shuffledChess[leftJump].sn[0] !== computerSide
+          ) {
+            overData = {
+              sn: shuffledChess[leftJump].sn,
+              position: shuffledChess[leftJump].position,
+              chess: {
+                ...shuffledChess[leftJump],
+              },
+            };
+            legalMoves.push([activeData, overData]);
+          }
+          if (
+            shuffledChess[rightMiddleChess] !== "." &&
+            shuffledChess[rightJump] !== "." &&
+            shuffledChess[rightJump].sn[0] !== computerSide
+          ) {
+            overData = {
+              sn: shuffledChess[rightJump].sn,
+              position: shuffledChess[rightJump].position,
+              chess: {
+                ...shuffledChess[rightJump],
+              },
+            };
+            legalMoves.push([activeData, overData]);
+          }
+        }
       }
     });
   }
