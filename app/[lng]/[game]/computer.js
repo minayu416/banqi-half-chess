@@ -35,13 +35,15 @@ export const easyComputer = (
     };
 
     // 如果棋子是空格或者已經翻開但不是電腦方的棋子，就不去動它
-    if (fromChess === "." || fromChess.sn[0] !== computerSide) continue;
+    if (fromChess === ".") continue;
 
     // 先判斷是否回 . 再判斷是否為 turned
     if (!fromChess.turned) {
       legalMoves.push([activeData, null]);
       continue;
     }
+
+    if (fromChess.sn[0] !== computerSide) continue;
 
     // 計算可移動範圍
 
@@ -95,11 +97,12 @@ export const easyComputer = (
       // 判斷目標位置是否為空
       if (rules.isMoveToEmptyPlace(overData)) {
         legalMoves.push([activeData, overData]);
+        return;
       }
       // 不能吃同一方
       if (rules.isSameSide(activeData, overData)) return;
       // 不能吃尚未翻開的棋子
-      if (!overData.turned) return;
+      if (!overData.chess.turned) return;
       // 如果是兵且對方是將，可以吃
       if (rules.isSolderCanCommit(activeData, overData)) {
         legalMoves.push([activeData, overData]);
@@ -119,8 +122,9 @@ export const easyComputer = (
       }
 
       // 是砲就額外處理
+      // TODO: 這個需要多驗證幾次
       if (rules.isCannon(activeData)) {
-        if (position / 7 < 2) {
+        if (position / 8 < 2) {
           const veticalJump = position + 16;
           const middleChess = position + 8;
           if (
@@ -138,7 +142,7 @@ export const easyComputer = (
             legalMoves.push([activeData, overData]);
           }
         }
-        if (position / 7 > 1) {
+        if (position / 8 >= 2) {
           const veticalJump = position - 16;
           const middleChess = position - 8;
           if (

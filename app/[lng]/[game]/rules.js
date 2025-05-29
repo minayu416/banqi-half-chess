@@ -22,3 +22,5 @@ export class ChessRules {
 }
 
 // TODO: extract edmitChange here?
+
+// TODO: 判斷贏跟書
