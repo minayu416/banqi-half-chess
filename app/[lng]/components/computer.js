@@ -39,7 +39,10 @@ export const easyComputer = (
 
     // 先判斷是否回 . 再判斷是否為 turned
     if (!fromChess.turned) {
-      legalMoves.push([activeData, null]);
+      legalMoves.push({
+        message: "turnOn",
+        move: { currentChess: activeData, overChess: null },
+      });
       continue;
     }
 
@@ -96,7 +99,10 @@ export const easyComputer = (
 
       // 判斷目標位置是否為空
       if (rules.isMoveToEmptyPlace(overData)) {
-        legalMoves.push([activeData, overData]);
+        legalMoves.push({
+          message: "toEmptyPlace",
+          move: { currentChess: activeData, overChess: overData },
+        });
         return;
       }
       // 不能吃同一方
@@ -105,11 +111,15 @@ export const easyComputer = (
       if (!overData.chess.turned) return;
       // 如果是兵且對方是將，可以吃
       if (rules.isSolderCanCommit(activeData, overData)) {
-        legalMoves.push([activeData, overData]);
+        legalMoves.push({
+          message: "commitChess",
+          move: { currentChess: activeData, overChess: overData },
+        });
         return;
       }
+      // TODO: 驗證一下會不會影響計算將的其他部署
       if (rules.isKingCanCommit(activeData, overData)) {
-        legalMoves.push([activeData, overData]);
+        // legalMoves.push([activeData, overData]);
         return;
       }
 
@@ -117,7 +127,10 @@ export const easyComputer = (
         rules.canCommit(activeData, overData) &&
         !rules.isCannon(activeData)
       ) {
-        legalMoves.push([activeData, overData]);
+        legalMoves.push({
+          message: "commitChess",
+          move: { currentChess: activeData, overChess: overData },
+        });
         return;
       }
 
@@ -139,7 +152,10 @@ export const easyComputer = (
                 ...shuffledChess[veticalJump],
               },
             };
-            legalMoves.push([activeData, overData]);
+            legalMoves.push({
+              message: "commitChess",
+              move: { currentChess: activeData, overChess: overData },
+            });
           }
         }
         if (position / 8 >= 2) {
@@ -157,7 +173,10 @@ export const easyComputer = (
                 ...shuffledChess[veticalJump],
               },
             };
-            legalMoves.push([activeData, overData]);
+            legalMoves.push({
+              message: "commitChess",
+              move: { currentChess: activeData, overChess: overData },
+            });
           }
         }
 
@@ -176,7 +195,10 @@ export const easyComputer = (
                 ...shuffledChess[horizontalJump],
               },
             };
-            legalMoves.push([activeData, overData]);
+            legalMoves.push({
+              message: "commitChess",
+              move: { currentChess: activeData, overChess: overData },
+            });
           }
         } else if (cannonRightEdge.includes(position)) {
           const horizontalJump = position - 2;
@@ -193,7 +215,10 @@ export const easyComputer = (
                 ...shuffledChess[horizontalJump],
               },
             };
-            legalMoves.push([activeData, overData]);
+            legalMoves.push({
+              message: "commitChess",
+              move: { currentChess: activeData, overChess: overData },
+            });
           }
         } else {
           const leftJump = position - 2;
@@ -212,7 +237,10 @@ export const easyComputer = (
                 ...shuffledChess[leftJump],
               },
             };
-            legalMoves.push([activeData, overData]);
+            legalMoves.push({
+              message: "commitChess",
+              move: { currentChess: activeData, overChess: overData },
+            });
           }
           if (
             shuffledChess[rightMiddleChess] !== "." &&
@@ -226,23 +254,24 @@ export const easyComputer = (
                 ...shuffledChess[rightJump],
               },
             };
-            legalMoves.push([activeData, overData]);
+            legalMoves.push({
+              message: "commitChess",
+              move: { currentChess: activeData, overChess: overData },
+            });
           }
         }
       }
     });
   }
-  console.log(legalMoves);
 
   // TODO: 判斷輸贏
   if (legalMoves.length === 0) {
-    setEventInfo("電腦無法移動");
-    return;
+    return {
+      message: "noAvailableMoves",
+      move: null,
+    };
   }
 
   const decidedMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-  console.log(decidedMove);
-  emitChange(decidedMove[0], decidedMove[1]);
-
-  return;
+  return decidedMove;
 };

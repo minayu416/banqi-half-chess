@@ -1,18 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Page({ }) {
-  
+export default function Page({}) {
   const { push } = useRouter();
 
   useEffect(() => {
-    if (navigator.language.includes('zh')){
-        push('/tw');
+    if (navigator.language.includes("zh")) {
+      push("/zh-TW");
     } else {
-        push('/en');
+      push("/en");
     }
-
   }, []);
-};
+}

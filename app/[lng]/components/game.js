@@ -1,4 +1,7 @@
-// TODO: constant
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
+
+import { instruction } from "@/app/[lng]/translate";
 
 export const i18nChessMapping = {
   en: {
@@ -158,3 +161,52 @@ export const ChessShuffleHandler = () => {
   });
   return shuffledChess;
 };
+
+export function Instructions({ lng, setShowInstructions }) {
+  const closeInstructions = () => {
+    setShowInstructions(false);
+  };
+
+  return (
+    <>
+      <div
+        className="absolute w-full h-full"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.6)", zIndex: 4 }}
+      ></div>
+      <div
+        className="absolute h-4/5 w-4/6 text-md lg:h-2/6 xl:w-3/6 2xl:w-2/5 top-[10%] left-[20%] rounded-md border-4 p-4"
+        style={{
+          backgroundColor: "#F1D6AE",
+          borderColor: "#B59376",
+          zIndex: 5,
+        }}
+      >
+        <div
+          className="absolute top-0 right-0 p-1 cursor-pointer"
+          onClick={() => closeInstructions()}
+        >
+          <FontAwesomeIcon
+            icon={faXmark}
+            size="2xl"
+            style={{ color: "#B59376" }}
+          />
+        </div>
+        <p className="font-bold" style={{ color: "#96602E" }}>
+          1. {instruction[lng].rule1}
+        </p>
+        <p className="font-bold" style={{ color: "#96602E" }}>
+          2. {instruction[lng].rule2}
+        </p>
+        <p className="font-bold" style={{ color: "#96602E" }}>
+          3. {instruction[lng].rule3}
+        </p>
+        <p className="font-bold" style={{ color: "#96602E" }}>
+          4. {instruction[lng].rule4}
+        </p>
+        <p className="font-bold" style={{ color: "#96602E" }}>
+          5. {instruction[lng].rule5}
+        </p>
+      </div>
+    </>
+  );
+}
