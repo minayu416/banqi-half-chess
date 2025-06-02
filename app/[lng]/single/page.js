@@ -114,6 +114,7 @@ function DroppableCell(props) {
       style={{ borderColor: "#3C3B3B", ...style }}
     >
       {props.children}
+      <div className="absolute text-xs right-1 bottom-0">{props.position}</div>
     </div>
   );
 }
@@ -127,6 +128,7 @@ function Board({
   setSide,
   sequence,
   changeSequence,
+  recordAteChess,
   setEventInfo,
 }) {
   const [shuffledChess, setShuffledChess] = useState([]);
@@ -150,6 +152,9 @@ function Board({
         const translatedMessage = gameEventTranslator(lng, message, move);
         if (move) {
           emitChange(translatedMessage, move);
+          if (message === "commitChess") {
+            recordAteChess(move.overChess);
+          }
         } else {
           setEventInfo(translatedMessage);
         }
@@ -200,10 +205,17 @@ function Board({
       return;
     }
 
-    const { message, move } = rules.isLegelMove(activeData, overData);
+    const { message, move } = rules.isLegelMove(
+      activeData,
+      overData,
+      shuffledChess
+    );
     const translatedMessage = gameEventTranslator(lng, message, move);
-    if (move) {
+    if (message != "canNotCommit" && move) {
       emitChange(translatedMessage, move);
+      if (message === "commitChess") {
+        recordAteChess(move.overChess);
+      }
     } else if (message) {
       setEventInfo(translatedMessage);
     }
@@ -268,6 +280,17 @@ function GameSection({ singleMode, setEventInfo, eventInfo, params }) {
   const showUserSide = currentUser.displayName;
   const showOpponentSide = opponent.displayName;
 
+  const [ateOurSideChess, setAteOurSideChess] = useState([]);
+  const [ateOpptSideChess, setAteOpptSideChess] = useState([]);
+
+  const recordAteChess = (overChess) => {
+    if (side[showUserSide] === overChess.chess.sn[0]) {
+      setAteOurSideChess((prev) => [...prev, overChess]);
+    } else {
+      setAteOpptSideChess((prev) => [...prev, overChess]);
+    }
+  };
+
   useEffect(() => {
     const me = {
       uid: "@single22336",
@@ -281,23 +304,13 @@ function GameSection({ singleMode, setEventInfo, eventInfo, params }) {
     setOpponent(opponentSide);
     setSequence(me.displayName);
   }, []);
-  // TODO: 可以重構
+
   function changeSequence() {
-    // if (gameId !== "single") {
-    //   if (currentUser.uid === sequence) {
-    //     setSequence(opponent.uid);
-    //     updateSequence(gameId, opponent.uid);
-    //   } else {
-    //     setSequence(currentUser.uid);
-    //     updateSequence(gameId, currentUser.uid);
-    //   }
-    // } else {
     if (currentUser.displayName === sequence) {
       setSequence(opponent.displayName);
     } else {
       setSequence(currentUser.displayName);
     }
-    // }
   }
 
   return (
@@ -356,7 +369,41 @@ function GameSection({ singleMode, setEventInfo, eventInfo, params }) {
           )}
         </div>
       </div>
-
+      {/* TODO: 顯示被吃掉的棋，下一版再做 */}
+      {/* <div className="flex flex flex-col lg:flex-row lg:w-full lg:m-auto justify-center items-center">
+        <div
+          className={`ml-2.5 w-[10%] h-4/6 lg:w-4/5 lg:h-auto border border flex flex-col lg:flex-row justify-center items-center`}
+          style={{ backgroundColor: "#FFFBF8", borderColor: "#B59376" }}
+        >
+...
+        </div>
+        <div className="ml-2 lg:w-1/2 h-full">
+          {" "}
+          {ateOurSideChess.map((chess, index) => (
+            <div
+              key={chess.chess.sn}
+              className={`rounded-full w-5 h-5 lg:w-5 lg:h-5 m-1.5 drop-shadow-lg flex justify-center items-center`}
+              style={{ backgroundColor: "#F1D6AE" }}
+            >
+              <div
+                className="rounded-full w-[2.5rem] h-[2.5rem] lg:w-[1.5rem] lg:h-[1.5rem] border-2 flex justify-center items-center"
+                style={{
+                  borderColor: chess.chess.color,
+                }}
+              >
+                <p
+                  className="text-xl lg:text-xl lxgw-wenkai-tc-regular select-none"
+                  style={{
+                    color: chess.chess.color,
+                  }}
+                >
+                  {chess.chess.chineseName}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div> */}
       {/* Banqi bg another option: #9C836A*/}
       <div className="h-5/6 lg:h-3/5 w-full">
         <p
@@ -382,6 +429,7 @@ function GameSection({ singleMode, setEventInfo, eventInfo, params }) {
               setSide={setSide}
               sequence={sequence}
               changeSequence={changeSequence}
+              recordAteChess={recordAteChess}
               setEventInfo={setEventInfo}
             />
           </div>
@@ -488,7 +536,8 @@ export default function Page({ params }) {
           <HeaderBase>
             <GameHeader
               lng={params.lng}
-              gameId={params.game}
+              mode={singleMode}
+              gameId={null}
               setShowChatRoom={null}
               setShowInstructions={setShowInstructions}
               menuRef={menuRef}

@@ -20,7 +20,7 @@ export class ChessRules {
   canNotCommit = (currentChess, overChess) =>
     currentChess.chess.weight < overChess.chess.weight;
 
-  isLegelMove = (currentChess, overChess) => {
+  isLegelMove = (currentChess, overChess, shuffledChess) => {
     const legelMove = { message: null, move: null };
 
     if (!currentChess.chess.turned) {
@@ -170,6 +170,7 @@ export class ChessRules {
 
     if (this.canNotCommit(currentChess, overChess)) {
       legelMove["message"] = "canNotCommit";
+      legelMove["move"] = { currentChess: currentChess, overChess: overChess };
       return legelMove;
     }
   };

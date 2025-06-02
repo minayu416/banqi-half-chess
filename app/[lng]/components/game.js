@@ -28,7 +28,7 @@ export const i18nChessMapping = {
       },
     },
   },
-  tw: {
+  "zh-TW": {
     b: "黑方",
     r: "紅方",
     chess: {

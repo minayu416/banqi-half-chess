@@ -34,6 +34,8 @@ export const homeTranslate = {
     chooseSingleMode: "Choose Mode",
     playWithCom: "Play vs Computer",
     playInOnePerson: "Two Players (Same Device)",
+    computer: "Single - vs Computer",
+    person: "Single - Two Players",
   },
   "zh-TW": {
     single: "單機模式",
@@ -46,6 +48,8 @@ export const homeTranslate = {
     chooseSingleMode: "選擇模式",
     playWithCom: "對戰電腦",
     playInOnePerson: "雙人對戰（同裝置）",
+    computer: "單人 - 對戰電腦",
+    person: "單人 - 雙人對戰",
   },
 };
 
@@ -62,7 +66,7 @@ const gameEventMessage = {
     cantEactSameColor: "You can not eat same color chess.",
     cantMoveOverStep: "Chess can not move over 1 step.",
     kingCantEatSolder: "King can not eat solder.",
-    cantEat: "can not eat",
+    canNotCommit: "can not eat",
     noAvailableMoves: "No available moves.",
   },
   "zh-TW": {
@@ -119,7 +123,7 @@ export const instruction = {
 export const gameEventTranslator = (lang, message, move) => {
   if (message === "turnOn") {
     const { currentChess, overChess } = move;
-    return `${gameEventMessage[lang]["turnOn"]} [${
+    return `${gameEventMessage[lang]["turnOn"]} ${currentChess.position} [${
       String(i18nChessMapping[lang][currentChess.chess.sn[0]]) ?? ""
     }] ${
       String(
@@ -151,7 +155,7 @@ export const gameEventTranslator = (lang, message, move) => {
   }
   if (message === "toEmptyPlace") {
     const { currentChess, overChess } = move;
-    return `${gameEventMessage[lang]["Moved"]} [${
+    return `${gameEventMessage[lang]["Moved"]} ${currentChess.position} [${
       String(i18nChessMapping[lang][currentChess.chess.sn[0]]) ?? ""
     }] ${
       String(
@@ -159,11 +163,11 @@ export const gameEventTranslator = (lang, message, move) => {
           currentChess.chess.type
         ]
       ) ?? ""
-    } ${gameEventMessage[lang]["toEmptyPlace"]}`;
+    } ${overChess.position} ${gameEventMessage[lang]["toEmptyPlace"]}`;
   }
   if (message === "commitChess") {
     const { currentChess, overChess } = move;
-    return `[${
+    return `${currentChess.position} [${
       String(i18nChessMapping[lang][currentChess.chess.sn[0]]) ?? ""
     }] ${
       String(
@@ -171,7 +175,9 @@ export const gameEventTranslator = (lang, message, move) => {
           currentChess.chess.type
         ]
       ) ?? ""
-    } -> [${String(i18nChessMapping[lang][overChess.chess.sn[0]]) ?? ""}] ${
+    } -> ${overChess.position} [${
+      String(i18nChessMapping[lang][overChess.chess.sn[0]]) ?? ""
+    }] ${
       String(
         i18nChessMapping[lang].chess[overChess.chess.sn[0]][
           overChess.chess.type

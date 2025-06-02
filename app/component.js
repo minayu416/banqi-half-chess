@@ -3,6 +3,8 @@ import { useRouter } from "next/navigation";
 
 import { checkGameIdExists } from "./firebase";
 
+import { homeTranslate } from "@/app/[lng]/translate";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faComment,
@@ -49,6 +51,7 @@ export function HomeHeader({ lng }) {
 
 export function GameHeader({
   lng,
+  mode,
   gameId,
   setShowChatRoom,
   setShowInstructions,
@@ -90,7 +93,16 @@ export function GameHeader({
           />
         </div>
       </div>
-      {gameId && gameId !== "single" && (
+      {mode && (
+        <div
+          className="w-full h-full flex items-center justify-center"
+          style={{ color: "#FFF3E8", borderColor: "#3C3B3B" }}
+        >
+          {homeTranslate[lng][mode]}
+        </div>
+      )}
+
+      {gameId && (
         <div ref={menuRef} className="absolute top-0 right-0 lg:hidden">
           <div className="p-3" onClick={() => extendRoom()}>
             <FontAwesomeIcon

@@ -123,6 +123,7 @@ function DroppableCell(props) {
       style={{ borderColor: "#3C3B3B", ...style }}
     >
       {props.children}
+      <div className="absolute text-xs right-1 bottom-0">{props.position}</div>
     </div>
   );
 }
@@ -177,7 +178,7 @@ function Board({
     setShuffledChess(updatedChess);
     changeSequence(currentUser.uid);
     setEventInfo(translatedMessage);
-    updatePosition(gameId, updatedChess, msg);
+    updatePosition(gameId, updatedChess, translatedMessage);
   }
 
   function handleDragEnd(event) {
@@ -203,9 +204,13 @@ function Board({
       return;
     }
 
-    const { message, move } = rules.isLegelMove(activeData, overData);
+    const { message, move } = rules.isLegelMove(
+      activeData,
+      overData,
+      shuffledChess
+    );
     const translatedMessage = gameEventTranslator(lng, message, move);
-    if (move) {
+    if (message != "canNotCommit" && move) {
       emitChange(translatedMessage, move);
     } else if (message) {
       setEventInfo(translatedMessage);
