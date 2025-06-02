@@ -4,20 +4,6 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 
 import { useRouter } from "next/navigation";
 
-import {
-  auth,
-  db,
-  createOrJoinGame,
-  updateSide,
-  updateSequence,
-  updatePosition,
-  fetchLatestPosition,
-  writeSendMessage,
-  fetchNewMessages,
-} from "@/app/firebase";
-
-import { doc, onSnapshot } from "firebase/firestore";
-
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 
 import {
@@ -29,7 +15,12 @@ import {
 
 import { HeaderBase, GameHeader } from "@/app/component";
 import { ChessRules } from "@/app/[lng]/components/rules";
-import { gameEventTranslator, gameBoardMessage } from "@/app/[lng]/translate";
+import {
+  gameEventTranslator,
+  gameBoardMessage,
+  homeTranslate,
+} from "@/app/[lng]/translate";
+import { easyComputer } from "@/app/[lng]/components/computer";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFlag, faXmark, faHouse } from "@fortawesome/free-solid-svg-icons";
@@ -130,36 +121,47 @@ function DroppableCell(props) {
 
 function Board({
   lng,
-  gameId,
+  singleMode,
   currentUser,
   opponent,
   side,
   setSide,
   sequence,
   changeSequence,
+  recordAteChess,
   setEventInfo,
 }) {
   const [shuffledChess, setShuffledChess] = useState([]);
-  const showUserSide = currentUser.uid;
-  const showOpponentSide = opponent.uid;
-
-  // TODO: 要記錄哪些棋子被吃掉了，然後顯示
-  const [ateOurSideChess, setAteOurSideChess] = useState([]);
-  const [ateOpptSideChess, setAteOpptSideChess] = useState([]);
-  // const [eventInfo, setEventInfo] = useState('<>');
+  const showUserSide = currentUser.displayName;
+  const showOpponentSide = opponent.displayName;
 
   useEffect(() => {
     // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
     const randomChess = ChessShuffleHandler();
     setShuffledChess(randomChess);
+  }, []);
 
-    const unsubscribe = fetchLatestPosition(gameId, (latestData) => {
-      setShuffledChess(latestData.position);
-      setEventInfo(latestData.eventMessage);
-    });
-
-    return () => unsubscribe();
-  }, [gameId]);
+  useEffect(() => {
+    if (singleMode === "computer" && sequence === opponent.displayName) {
+      const timer = setTimeout(() => {
+        const { message, move } = easyComputer(
+          shuffledChess,
+          side[opponent.displayName],
+          rules
+        );
+        const translatedMessage = gameEventTranslator(lng, message, move);
+        if (move) {
+          emitChange(translatedMessage, move);
+          if (message === "commitChess") {
+            recordAteChess(move.overChess);
+          }
+        } else {
+          setEventInfo(translatedMessage);
+        }
+      }, 1000); // 模擬思考時間
+      return () => clearTimeout(timer);
+    }
+  }, [shuffledChess, sequence]);
 
   const rules = useMemo(() => new ChessRules(), []);
 
@@ -178,7 +180,6 @@ function Board({
     setShuffledChess(updatedChess);
     changeSequence(currentUser.uid);
     setEventInfo(translatedMessage);
-    updatePosition(gameId, updatedChess, translatedMessage);
   }
 
   function handleDragEnd(event) {
@@ -192,7 +193,7 @@ function Board({
     let activeData = activeEvent.data.current;
     let overData = overEvent.data.current;
 
-    if (currentUser.uid !== sequence) {
+    if (singleMode === "computer" && currentUser.displayName !== sequence) {
       const translatedMessage = gameEventTranslator(lng, "isNotYourTurn", null);
       setEventInfo(translatedMessage);
       return;
@@ -212,6 +213,9 @@ function Board({
     const translatedMessage = gameEventTranslator(lng, message, move);
     if (message != "canNotCommit" && move) {
       emitChange(translatedMessage, move);
+      if (message === "commitChess") {
+        recordAteChess(move.overChess);
+      }
     } else if (message) {
       setEventInfo(translatedMessage);
     }
@@ -224,7 +228,6 @@ function Board({
       setSide(newSide);
       const translatedMessage = gameEventTranslator(lng, "setColor", null);
       setEventInfo(translatedMessage);
-      updateSide(gameId, newSide);
     }
   }
   return (
@@ -265,64 +268,48 @@ function Board({
   );
 }
 
-function GameSection({ setEventInfo, eventInfo, params }) {
+function GameSection({ singleMode, setEventInfo, eventInfo, params }) {
   const [side, setSide] = useState(null);
   const [sequence, setSequence] = useState(null);
 
   const [currentUser, setCurrentUser] = useState({});
   const [opponent, setOpponent] = useState({});
 
-  const gameId = params.game;
   const lng = params.lng;
 
-  const showUserSide = currentUser.uid;
-  const showOpponentSide = opponent.uid;
+  const showUserSide = currentUser.displayName;
+  const showOpponentSide = opponent.displayName;
+
+  const [ateOurSideChess, setAteOurSideChess] = useState([]);
+  const [ateOpptSideChess, setAteOpptSideChess] = useState([]);
+
+  const recordAteChess = (overChess) => {
+    if (side[showUserSide] === overChess.chess.sn[0]) {
+      setAteOurSideChess((prev) => [...prev, overChess]);
+    } else {
+      setAteOpptSideChess((prev) => [...prev, overChess]);
+    }
+  };
 
   useEffect(() => {
-    // currentUser or opponent -> {"uid": "", "displayName": ""}
-    setCurrentUser(auth.currentUser);
-
-    const fetchGameData = async () => {
-      const { gameCreator, gameOpponent, gameSequence } =
-        await createOrJoinGame(gameId, auth.currentUser);
-      if (auth.currentUser.uid === gameCreator.uid) {
-        setOpponent(gameOpponent);
-      } else {
-        setOpponent(gameCreator);
-      }
-
-      setSequence(gameSequence);
+    const me = {
+      uid: "@single22336",
+      displayName: gameBoardMessage[lng].meName,
     };
-    fetchGameData();
-
-    const docRef = doc(db, "games", gameId);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.opponent) {
-          if (auth.currentUser.uid === data.creator.uid) {
-            setOpponent(docSnap.data().opponent);
-          } else {
-            setOpponent(docSnap.data().creator);
-          }
-        }
-        if (data.side) {
-          setSide(data.side);
-        }
-        setSequence(data.sequence);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [gameId]);
+    const opponentSide = {
+      uid: "@single18732",
+      displayName: gameBoardMessage[lng].opponentName,
+    };
+    setCurrentUser(me);
+    setOpponent(opponentSide);
+    setSequence(me.displayName);
+  }, []);
 
   function changeSequence() {
-    if (currentUser.uid === sequence) {
-      setSequence(opponent.uid);
-      updateSequence(gameId, opponent.uid);
+    if (currentUser.displayName === sequence) {
+      setSequence(opponent.displayName);
     } else {
-      setSequence(currentUser.uid);
-      updateSequence(gameId, currentUser.uid);
+      setSequence(currentUser.displayName);
     }
   }
 
@@ -372,7 +359,7 @@ function GameSection({ setEventInfo, eventInfo, params }) {
           )}
         </div>
         <div>
-          {currentUser.uid !== sequence && (
+          {currentUser.displayName !== sequence && (
             <FontAwesomeIcon
               icon={faFlag}
               size="xl"
@@ -382,7 +369,41 @@ function GameSection({ setEventInfo, eventInfo, params }) {
           )}
         </div>
       </div>
-
+      {/* TODO: 顯示被吃掉的棋，下一版再做 */}
+      {/* <div className="flex flex flex-col lg:flex-row lg:w-full lg:m-auto justify-center items-center">
+        <div
+          className={`ml-2.5 w-[10%] h-4/6 lg:w-4/5 lg:h-auto border border flex flex-col lg:flex-row justify-center items-center`}
+          style={{ backgroundColor: "#FFFBF8", borderColor: "#B59376" }}
+        >
+...
+        </div>
+        <div className="ml-2 lg:w-1/2 h-full">
+          {" "}
+          {ateOurSideChess.map((chess, index) => (
+            <div
+              key={chess.chess.sn}
+              className={`rounded-full w-5 h-5 lg:w-5 lg:h-5 m-1.5 drop-shadow-lg flex justify-center items-center`}
+              style={{ backgroundColor: "#F1D6AE" }}
+            >
+              <div
+                className="rounded-full w-[2.5rem] h-[2.5rem] lg:w-[1.5rem] lg:h-[1.5rem] border-2 flex justify-center items-center"
+                style={{
+                  borderColor: chess.chess.color,
+                }}
+              >
+                <p
+                  className="text-xl lg:text-xl lxgw-wenkai-tc-regular select-none"
+                  style={{
+                    color: chess.chess.color,
+                  }}
+                >
+                  {chess.chess.chineseName}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div> */}
       {/* Banqi bg another option: #9C836A*/}
       <div className="h-5/6 lg:h-3/5 w-full">
         <p
@@ -399,19 +420,18 @@ function GameSection({ setEventInfo, eventInfo, params }) {
             className="w-full h-full border-2 rounded-md"
             style={{ borderColor: "#3C3B3B" }}
           >
-            {opponent.uid && (
-              <Board
-                lng={lng}
-                gameId={gameId}
-                currentUser={currentUser}
-                opponent={opponent}
-                side={side}
-                setSide={setSide}
-                sequence={sequence}
-                changeSequence={changeSequence}
-                setEventInfo={setEventInfo}
-              />
-            )}
+            <Board
+              lng={lng}
+              singleMode={singleMode}
+              currentUser={currentUser}
+              opponent={opponent}
+              side={side}
+              setSide={setSide}
+              sequence={sequence}
+              changeSequence={changeSequence}
+              recordAteChess={recordAteChess}
+              setEventInfo={setEventInfo}
+            />
           </div>
         </div>
       </div>
@@ -457,7 +477,7 @@ function GameSection({ setEventInfo, eventInfo, params }) {
           )}
         </div>
         <div>
-          {currentUser.uid === sequence && (
+          {currentUser.displayName === sequence && (
             <FontAwesomeIcon
               icon={faFlag}
               size="xl"
@@ -471,191 +491,6 @@ function GameSection({ setEventInfo, eventInfo, params }) {
   );
 }
 
-function ChatMessage(props) {
-  const { userId, displayName, text, photoURL, createdAt } = props.message;
-  // console.log(auth.currentUser.uid)
-  const messageAlgn = userId === auth.currentUser.uid ? "flex-row-reverse" : "";
-
-  let MessageTime = {};
-  if (createdAt == null) {
-    MessageTime.time = "";
-  } else {
-    const date = new Date(createdAt.seconds * 1000);
-    MessageTime.time =
-      ("0" + (date.getMonth() + 1)).slice(-2) +
-      "/" +
-      ("0" + date.getDate()).slice(-2) +
-      " " +
-      ("0" + date.getHours()).slice(-2) +
-      ":" +
-      ("0" + date.getMinutes()).slice(-2);
-  }
-
-  return (
-    <>
-      <div className={`flex mb-1 ${messageAlgn}`}>
-        <div
-          className={`h-10 w-10 ${
-            auth.currentUser.uid === userId ? "ml-2" : "mr-2"
-          }`}
-        >
-          {photoURL ? (
-            <img src={photoURL} className="rounded-full" />
-          ) : (
-            <div
-              className="w-full h-full border rounded-xl"
-              style={{
-                backgroundColor: "#FFF3E8",
-                borderColor: "#B59376",
-                color: "#96602E",
-              }}
-            ></div>
-          )}
-        </div>
-        <div className="py-1">
-          {/* <p class="text-xs font-voll">{displayName}</p> */}
-          <div
-            className="border rounded-md mb-1"
-            style={{
-              backgroundColor: "#FFF3E8",
-              borderColor: "#B59376",
-              color: "#96602E",
-            }}
-          >
-            <p
-              className={`text-md bg-color-03 rounded-md py-0.5 px-2 font-voll text-center`}
-            >
-              {text}
-            </p>
-          </div>
-          <p className="text-xs font-roboto">{MessageTime.time}</p>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function ChatRoom({ lng, gameId }) {
-  const dummy = useRef();
-
-  const [formValue, setFormValue] = useState("");
-  const { uid, displayName, photoURL } = auth.currentUser;
-  const [messages, setMessages] = useState([]);
-
-  useEffect(() => {
-    const unsubscribe = fetchNewMessages(gameId, (latestData) => {
-      setMessages(latestData);
-    });
-
-    return () => unsubscribe();
-  }, [gameId]);
-
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    await writeSendMessage(gameId, uid, displayName, photoURL, formValue);
-    setFormValue("");
-    dummy.current.scrollIntoView({ behavior: "smooth" });
-  };
-
-  return (
-    <div
-      className="flex flex-col h-full w-full lg:h-3/4 lg:w-4/5 relative border rounded-md"
-      style={{ backgroundColor: "#FFFBF8", borderColor: "#B59376" }}
-    >
-      <div className="h-5/6 p-4 overflow-y-scroll">
-        <span ref={dummy}></span>
-        {messages &&
-          messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
-      </div>
-      <form
-        onSubmit={sendMessage}
-        className="flex w-full border-t absolute inset-x-0 bottom-0 rounded-b-md"
-        style={{ backgroundColor: "#FFF3E8", borderColor: "#B59376" }}
-      >
-        <input
-          value={formValue}
-          onChange={(e) => setFormValue(e.target.value)}
-          placeholder="Type message..."
-          className="ml-4 my-3 py-2 px-3 w-2/3 placeholder:text-gray-600 rounded-md text-black text-sm"
-        />
-        <button
-          type="submit"
-          disabled={!formValue}
-          className="m-auto px-3 py-2 rounded-lg text-xs font-bold border"
-          style={{
-            backgroundColor: "#FFFBF8",
-            borderColor: "#B59376",
-            color: "#96602E",
-          }}
-        >
-          {gameBoardMessage[lng].chatButton}
-        </button>
-      </form>
-    </div>
-  );
-}
-
-function Sidebar({ lng, gameId, extendChatRoomRef }) {
-  return (
-    <>
-      <div
-        ref={extendChatRoomRef}
-        className="absolute h-full w-1/3 p-3 inset-y-0 right-0 lg:hidden border transition-transform ease-in-out duration-300"
-        style={{
-          backgroundColor: "#B59376",
-          borderColor: "#96602E",
-          zIndex: 3,
-        }}
-      >
-        <ChatRoom lng={lng} gameId={gameId} />
-      </div>
-    </>
-  );
-}
-
-function IsNotLoginMessage() {
-  const router = useRouter();
-
-  const backHome = () => {
-    router.push(`/`);
-  };
-
-  return (
-    <>
-      <div
-        className="absolute h-3/5 w-3/5 lg:h-2/6 xl:w-2/5 2xl:w-2/5 top-[15%] lg:top-[10%] left-[25%] rounded-md border-4 p-4"
-        style={{
-          backgroundColor: "#F1D6AE",
-          borderColor: "#B59376",
-          zIndex: 5,
-        }}
-      >
-        <p
-          className="text-md md:text-xl font-bold"
-          style={{ color: "#96602E" }}
-        >
-          您尚未登入，請由首頁登入，並加入遊戲
-        </p>
-        <p
-          className="text-md md:text-xl font-bold"
-          style={{ color: "#96602E" }}
-        >
-          You haven't login, please login from home page.
-        </p>
-        <div className="flex justify-center">
-          <div className="p-3 lg:p-5 cursor-pointer" onClick={() => backHome()}>
-            <FontAwesomeIcon
-              icon={faHouse}
-              size="xl"
-              style={{ color: "#B59376" }}
-            />
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
 export default function Page({ params }) {
   const router = useRouter();
 
@@ -663,10 +498,11 @@ export default function Page({ params }) {
 
   const extendChatRoomRef = useRef(null);
   const menuRef = useRef(null);
-  const [showChatRoom, setShowChatRoom] = useState(false);
-  const [isGettingAuth, setIsGettingAuth] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
-
+  const [singleMode, setSingleMode] = useState(null);
+  const fontStyle = {
+    color: "#96602E",
+  };
   const handleClickOutside = (event) => {
     if (
       extendChatRoomRef.current &&
@@ -678,15 +514,14 @@ export default function Page({ params }) {
     }
   };
 
+  const backHomePage = () => {
+    router.push(`/${params.lng}`);
+  };
+
   useEffect(() => {
-    if (!["tw", "en"].includes(params.lng)) {
+    if (!["zh-TW", "en"].includes(params.lng)) {
       router.push(`/`);
     }
-    auth.authStateReady().then(() => {
-      if (auth.currentUser) {
-        setIsGettingAuth(true);
-      }
-    });
 
     document.addEventListener("click", handleClickOutside);
     return () => {
@@ -696,54 +531,111 @@ export default function Page({ params }) {
 
   return (
     <>
-      <HeaderBase>
-        <GameHeader
-          lng={params.lng}
-          gameId={params.game}
-          setShowChatRoom={setShowChatRoom}
-          setShowInstructions={setShowInstructions}
-          menuRef={menuRef}
-        />
-      </HeaderBase>
-      {showInstructions && (
-        <Instructions
-          lng={params.lng}
-          setShowInstructions={setShowInstructions}
-        />
-      )}
-      {showChatRoom && (
-        <Sidebar
-          lng={params.lng}
-          gameId={params.game}
-          extendChatRoomRef={extendChatRoomRef}
-        />
-      )}
-      <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
-        {isGettingAuth && (
-          <GameSection
-            setEventInfo={setEventInfo}
-            eventInfo={eventInfo}
-            params={params}
-          />
-        )}
-        {!isGettingAuth && (
-          <>
-            <IsNotLoginMessage />
-          </>
-        )}
+      {["zh-TW", "en"].includes(params.lng) ? (
+        <>
+          <HeaderBase>
+            <GameHeader
+              lng={params.lng}
+              mode={singleMode}
+              gameId={null}
+              setShowChatRoom={null}
+              setShowInstructions={setShowInstructions}
+              menuRef={menuRef}
+            />
+          </HeaderBase>
+          {showInstructions && (
+            <Instructions
+              lng={params.lng}
+              setShowInstructions={setShowInstructions}
+            />
+          )}
 
-        {isGettingAuth && (
-          <div className="hidden lg:flex flex-col w-1/3 justify-center items-center">
-            <div
-              className="mb-2 text-md font-bold"
-              style={{ color: "#96602E" }}
-            >
-              {eventInfo}
+          <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
+            <GameSection
+              singleMode={singleMode}
+              setEventInfo={setEventInfo}
+              eventInfo={eventInfo}
+              params={params}
+            />
+
+            <div className="hidden lg:flex w-1/3 flex-col justify-center items-center">
+              <div
+                className="mb-2 text-md font-bold"
+                style={{ color: "#96602E" }}
+              >
+                {eventInfo}
+              </div>
             </div>
-            <ChatRoom lng={params.lng} gameId={params.game} />
           </div>
-        )}
-      </div>
+
+          {!singleMode && (
+            <>
+              <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/30">
+                <div
+                  className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-6 px-2 lg:px-8 lg:py-8 drop-shadow-md"
+                  style={{ backgroundColor: "#9C836A", borderColor: "#B59376" }}
+                >
+                  <p
+                    className="text-2xl md:text-3xl font-bold text-center mb-4 lg:mb-6"
+                    style={{ color: "#FFF3E8" }}
+                  >
+                    {homeTranslate[params.lng].chooseSingleMode}
+                  </p>
+                  <div className="flex flex-col justify-center items-center">
+                    <button
+                      onClick={() => setSingleMode("computer")}
+                      className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+                      style={{
+                        backgroundColor: "#FFF3E8",
+                        borderColor: "#B59376",
+                      }}
+                    >
+                      <p
+                        className="text-xl font-bold text-center"
+                        style={fontStyle}
+                      >
+                        {homeTranslate[params.lng].playWithCom}
+                      </p>
+                    </button>
+                    <button
+                      onClick={() => setSingleMode("person")}
+                      className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+                      style={{
+                        backgroundColor: "#FFF3E8",
+                        borderColor: "#B59376",
+                      }}
+                    >
+                      <p
+                        className="text-xl font-bold text-center"
+                        style={fontStyle}
+                      >
+                        {homeTranslate[params.lng].playInOnePerson}
+                      </p>
+                    </button>
+                    <button
+                      onClick={() => backHomePage()}
+                      className="w-4/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+                      style={{
+                        backgroundColor: "#FFF3E8",
+                        borderColor: "#B59376",
+                      }}
+                    >
+                      <p
+                        className="text-xl font-bold text-center"
+                        style={fontStyle}
+                      >
+                        {homeTranslate[params.lng].back}
+                      </p>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      ) : (
+        <></>
+      )}
     </>
   );
 }
