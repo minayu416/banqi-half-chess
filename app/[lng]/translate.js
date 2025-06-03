@@ -36,6 +36,10 @@ export const homeTranslate = {
     playInOnePerson: "Two Players (Same Device)",
     computer: "Single - vs Computer",
     person: "Single - Two Players",
+    gameCode: "Game Code",
+    gameRoomNotice: "Please copy the code for your opponent to join the game.",
+    copy: "Copy Code",
+    copied: "Copied",
   },
   "zh-TW": {
     single: "單機模式",
@@ -50,6 +54,10 @@ export const homeTranslate = {
     playInOnePerson: "雙人對戰（同裝置）",
     computer: "單人 - 對戰電腦",
     person: "單人 - 雙人對戰",
+    gameCode: "遊戲房碼",
+    gameRoomNotice: "請複製此遊戲碼讓另外一個玩家可以加入同一局遊戲。",
+    copy: "複製",
+    copied: "已經複製",
   },
 };
 
