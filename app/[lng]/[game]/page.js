@@ -29,7 +29,11 @@ import {
 
 import { HeaderBase, GameHeader } from "@/app/component";
 import { ChessRules } from "@/app/[lng]/components/rules";
-import { gameEventTranslator, gameBoardMessage } from "@/app/[lng]/translate";
+import {
+  gameEventTranslator,
+  gameBoardMessage,
+  homeTranslate,
+} from "@/app/[lng]/translate";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFlag, faXmark, faHouse } from "@fortawesome/free-solid-svg-icons";
@@ -272,8 +276,11 @@ function GameSection({ setEventInfo, eventInfo, params }) {
   const [currentUser, setCurrentUser] = useState({});
   const [opponent, setOpponent] = useState({});
 
+  const [copied, setCopied] = useState(false);
+
   const gameId = params.game;
   const lng = params.lng;
+  const router = useRouter();
 
   const showUserSide = currentUser.uid;
   const showOpponentSide = opponent.uid;
@@ -316,6 +323,20 @@ function GameSection({ setEventInfo, eventInfo, params }) {
     return () => unsubscribe();
   }, [gameId]);
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(gameId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // 顯示「已複製」2秒
+    } catch (err) {
+      console.error("Copy Failed", err);
+    }
+  };
+
+  const backHomePage = () => {
+    router.push(`/${params.lng}`);
+  };
+
   function changeSequence() {
     if (currentUser.uid === sequence) {
       setSequence(opponent.uid);
@@ -328,6 +349,73 @@ function GameSection({ setEventInfo, eventInfo, params }) {
 
   return (
     <div className="w-full lg:w-2/3 flex flex-row-reverse lg:flex-col justify-center items-center">
+      {!opponent.uid && (
+        <>
+          <div className="absolute flex justify-center items-center z-50 bg-black/30">
+            <div
+              className="border rounded-md py-6 px-2 lg:px-8 lg:py-8 drop-shadow-md"
+              style={{ backgroundColor: "#9C836A", borderColor: "#B59376" }}
+            >
+              <p
+                className="text-2xl md:text-3xl font-bold text-center mb-1"
+                style={{ color: "#FFF3E8" }}
+              >
+                {homeTranslate[params.lng].gameCode}
+              </p>
+              <p
+                className={`mb-5 text-center italic text-sm`}
+                style={{ color: "#FFF3E8" }}
+              >
+                {homeTranslate[lng].gameRoomNotice}
+              </p>
+              <div className="flex flex-col justify-center items-center">
+                <p
+                  className="w-4/5 border rounded-lg py-1 mb-3 text-xl font-bold text-center"
+                  style={{
+                    color: "#FFF3E8",
+                    backgroundColor: "#B59376",
+                    borderColor: "#B59376",
+                  }}
+                >
+                  {gameId}
+                </p>
+                <button
+                  onClick={handleCopy}
+                  className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+                  style={{
+                    backgroundColor: "#FFF3E8",
+                    borderColor: "#B59376",
+                  }}
+                >
+                  <p
+                    className="text-xl font-bold text-center"
+                    style={{ color: "#96602E" }}
+                  >
+                    {copied
+                      ? homeTranslate[params.lng].copied
+                      : homeTranslate[params.lng].copy}
+                  </p>
+                </button>
+                <button
+                  onClick={() => backHomePage()}
+                  className="w-4/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+                  style={{
+                    backgroundColor: "#FFF3E8",
+                    borderColor: "#B59376",
+                  }}
+                >
+                  <p
+                    className="text-xl font-bold text-center"
+                    style={{ color: "#96602E" }}
+                  >
+                    {homeTranslate[params.lng].back}
+                  </p>
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       <div
         className={`ml-2.5 lg:m-auto w-[10%] h-4/6 lg:w-2/4 lg:h-auto border border flex flex-col lg:flex-row justify-center items-center`}
         style={{ backgroundColor: "#FFFBF8", borderColor: "#B59376" }}
