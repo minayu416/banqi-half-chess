@@ -130,6 +130,9 @@ function Board({
   changeSequence,
   recordAteChess,
   setEventInfo,
+  setIsWinner,
+  ateOurSideChess,
+  ateOpptSideChess,
 }) {
   const [shuffledChess, setShuffledChess] = useState([]);
   const showUserSide = currentUser.displayName;
@@ -164,6 +167,20 @@ function Board({
   }, [shuffledChess, sequence]);
 
   const rules = useMemo(() => new ChessRules(), []);
+
+  // TODO: 計算誰輸誰贏
+  // useEffect(() => {
+  //   const isWin = rules.isWinOrLose(shuffledChess);
+  //   if (isWin) {
+  //     const result = {
+  //       winner:
+  //         ateOurSideChess.length > ateOpptSideChess.length ? "Computer" : "Me",
+  //       weAte: ateOpptSideChess.length,
+  //       weLoose: ateOurSideChess.length,
+  //     };
+  //     setIsWinner(result);
+  //   }
+  // }, [sequence]);
 
   function emitChange(translatedMessage, move) {
     const { currentChess, overChess } = move;
@@ -268,7 +285,13 @@ function Board({
   );
 }
 
-function GameSection({ singleMode, setEventInfo, eventInfo, params }) {
+function GameSection({
+  singleMode,
+  setEventInfo,
+  eventInfo,
+  setIsWinner,
+  params,
+}) {
   const [side, setSide] = useState(null);
   const [sequence, setSequence] = useState(null);
 
@@ -431,6 +454,9 @@ function GameSection({ singleMode, setEventInfo, eventInfo, params }) {
               changeSequence={changeSequence}
               recordAteChess={recordAteChess}
               setEventInfo={setEventInfo}
+              setIsWinner={setIsWinner}
+              ateOurSideChess={ateOurSideChess}
+              ateOpptSideChess={ateOpptSideChess}
             />
           </div>
         </div>
@@ -491,18 +517,159 @@ function GameSection({ singleMode, setEventInfo, eventInfo, params }) {
   );
 }
 
-export default function Page({ params }) {
+function Result({ lng, isWinner }) {
   const router = useRouter();
 
+  const next = () => {
+    router.push(`/${params.lng}/single`);
+  };
+  const backHomePage = () => {
+    router.push(`/${params.lng}`);
+  };
+  return (
+    <>
+      <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/30">
+        <div
+          className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-6 px-2 lg:px-8 lg:py-6 drop-shadow-md"
+          style={{ backgroundColor: "#9C836A", borderColor: "#B59376" }}
+        >
+          <p
+            className="text-2xl md:text-2xl font-bold text-center mb-1"
+            style={{ color: "#FFF3E8" }}
+          >
+            {homeTranslate[lng]["winner"]}
+          </p>
+          <p
+            className={`text-center italic text-sm`}
+            style={{ color: "#FFF3E8" }}
+          >
+            {homeTranslate[lng][isWinner.winner]}
+          </p>
+          <p
+            className={`text-center italic text-sm`}
+            style={{ color: "#FFF3E8" }}
+          >
+            {homeTranslate[lng]["weAte"]}
+            {homeTranslate[lng][isWinner.weAte]}
+          </p>
+          <p
+            className={`mb-5 text-center italic text-sm`}
+            style={{ color: "#FFF3E8" }}
+          >
+            {homeTranslate[lng]["weLoose"]}
+            {homeTranslate[lng][isWinner.weLoose]}
+          </p>
+          <div className="flex flex-col justify-center items-center">
+            <button
+              onClick={() => next()}
+              className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+              style={{
+                backgroundColor: "#FFF3E8",
+                borderColor: "#B59376",
+              }}
+            >
+              <p
+                className="text-xl font-bold text-center"
+                style={{ color: "#96602E" }}
+              >
+                {homeTranslate[lng].next}
+              </p>
+            </button>
+            <button
+              onClick={() => backHomePage()}
+              className="w-4/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+              style={{
+                backgroundColor: "#FFF3E8",
+                borderColor: "#B59376",
+              }}
+            >
+              <p
+                className="text-xl font-bold text-center"
+                style={{ color: "#96602E" }}
+              >
+                {homeTranslate[lng].back}
+              </p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ChooseMode({ lng, setSingleMode }) {
+  const router = useRouter();
+  const fontStyle = {
+    color: "#96602E",
+  };
+
+  const backHomePage = () => {
+    router.push(`/${params.lng}`);
+  };
+  return (
+    <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/30">
+      <div
+        className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-6 px-2 lg:px-8 lg:py-8 drop-shadow-md"
+        style={{ backgroundColor: "#9C836A", borderColor: "#B59376" }}
+      >
+        <p
+          className="text-2xl md:text-3xl font-bold text-center mb-4 lg:mb-6"
+          style={{ color: "#FFF3E8" }}
+        >
+          {homeTranslate[lng].chooseSingleMode}
+        </p>
+        <div className="flex flex-col justify-center items-center">
+          <button
+            onClick={() => setSingleMode("computer")}
+            className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+            style={{
+              backgroundColor: "#FFF3E8",
+              borderColor: "#B59376",
+            }}
+          >
+            <p className="text-xl font-bold text-center" style={fontStyle}>
+              {homeTranslate[lng].playWithCom}
+            </p>
+          </button>
+          <button
+            onClick={() => setSingleMode("person")}
+            className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+            style={{
+              backgroundColor: "#FFF3E8",
+              borderColor: "#B59376",
+            }}
+          >
+            <p className="text-xl font-bold text-center" style={fontStyle}>
+              {homeTranslate[lng].playInOnePerson}
+            </p>
+          </button>
+          <button
+            onClick={() => backHomePage()}
+            className="w-4/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+            style={{
+              backgroundColor: "#FFF3E8",
+              borderColor: "#B59376",
+            }}
+          >
+            <p className="text-xl font-bold text-center" style={fontStyle}>
+              {homeTranslate[lng].back}
+            </p>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Page({ params }) {
   const [eventInfo, setEventInfo] = useState("<>");
 
   const extendChatRoomRef = useRef(null);
   const menuRef = useRef(null);
   const [showInstructions, setShowInstructions] = useState(false);
   const [singleMode, setSingleMode] = useState(null);
-  const fontStyle = {
-    color: "#96602E",
-  };
+  const [isWinner, setIsWinner] = useState(null);
+
   const handleClickOutside = (event) => {
     if (
       extendChatRoomRef.current &&
@@ -512,10 +679,6 @@ export default function Page({ params }) {
         setShowChatRoom(false);
       }
     }
-  };
-
-  const backHomePage = () => {
-    router.push(`/${params.lng}`);
   };
 
   useEffect(() => {
@@ -555,6 +718,7 @@ export default function Page({ params }) {
               singleMode={singleMode}
               setEventInfo={setEventInfo}
               eventInfo={eventInfo}
+              setIsWinner={setIsWinner}
               params={params}
             />
 
@@ -567,70 +731,11 @@ export default function Page({ params }) {
               </div>
             </div>
           </div>
+          {/* TODO: 計算誰輸誰贏 */}
+          {/* {isWinner && <Result lng={params.lng} isWinner={isWinner} />} */}
 
           {!singleMode && (
-            <>
-              <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/30">
-                <div
-                  className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-6 px-2 lg:px-8 lg:py-8 drop-shadow-md"
-                  style={{ backgroundColor: "#9C836A", borderColor: "#B59376" }}
-                >
-                  <p
-                    className="text-2xl md:text-3xl font-bold text-center mb-4 lg:mb-6"
-                    style={{ color: "#FFF3E8" }}
-                  >
-                    {homeTranslate[params.lng].chooseSingleMode}
-                  </p>
-                  <div className="flex flex-col justify-center items-center">
-                    <button
-                      onClick={() => setSingleMode("computer")}
-                      className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
-                      style={{
-                        backgroundColor: "#FFF3E8",
-                        borderColor: "#B59376",
-                      }}
-                    >
-                      <p
-                        className="text-xl font-bold text-center"
-                        style={fontStyle}
-                      >
-                        {homeTranslate[params.lng].playWithCom}
-                      </p>
-                    </button>
-                    <button
-                      onClick={() => setSingleMode("person")}
-                      className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
-                      style={{
-                        backgroundColor: "#FFF3E8",
-                        borderColor: "#B59376",
-                      }}
-                    >
-                      <p
-                        className="text-xl font-bold text-center"
-                        style={fontStyle}
-                      >
-                        {homeTranslate[params.lng].playInOnePerson}
-                      </p>
-                    </button>
-                    <button
-                      onClick={() => backHomePage()}
-                      className="w-4/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
-                      style={{
-                        backgroundColor: "#FFF3E8",
-                        borderColor: "#B59376",
-                      }}
-                    >
-                      <p
-                        className="text-xl font-bold text-center"
-                        style={fontStyle}
-                      >
-                        {homeTranslate[params.lng].back}
-                      </p>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </>
+            <ChooseMode lng={params.lng} setSingleMode={setSingleMode} />
           )}
         </>
       ) : (
