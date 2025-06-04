@@ -175,5 +175,11 @@ export class ChessRules {
     }
   };
   // TODO: 判斷贏跟輸的函式，並在最後沒有步數可以下的時候顯示結算
-  isWinOrLose = (shuffledChess) => {};
+  isWinOrLose = (shuffledChess) => {
+    // console.log(shuffledChess);
+    // TODO: 都打開了
+    // TODO: 只剩下單色
+    // TODO: 只剩下砲，棋又小於 4
+    // TODO: 計算誰被吃
+  };
 }
