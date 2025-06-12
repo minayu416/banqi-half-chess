@@ -3,7 +3,7 @@ import { i18nChessMapping } from "@/app/[lng]/components/game";
 export const seoMetadata = {
   en: {
     lang: "en",
-    title: "Banqi Chinese Chess",
+    title: "Online Banqi Chinese Chess",
     description:
       "A Banqi Chinese Chess online service includes single and online mode, developed by Mina.",
     url: "https://banqi-half-chess.vercel.app/en",
@@ -13,7 +13,7 @@ export const seoMetadata = {
   },
   "zh-TW": {
     lang: "zh-TW",
-    title: "象棋暗棋 Banqi Chinese Chess",
+    title: "線上暗棋 Banqi Chinese Chess",
     description: "包含單人模式及線上連線模式的暗棋網站。",
     url: "https://banqi-half-chess.vercel.app/tw",
     author: "Ming-Jung YU",

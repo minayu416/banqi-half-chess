@@ -1,3 +1,4 @@
+import Script from "next/script";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -11,11 +12,26 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        {/* GA4 Script */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-77V2R2WZSZ"
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-77V2R2WZSZ', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );
