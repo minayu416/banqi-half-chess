@@ -604,7 +604,7 @@ function ChooseMode({ lng, setSingleMode }) {
   };
 
   const backHomePage = () => {
-    router.push(`/${params.lng}`);
+    router.push(`/${lng}`);
   };
   return (
     <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/30">
