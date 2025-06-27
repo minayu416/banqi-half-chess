@@ -767,7 +767,7 @@ export default function Page({ params }) {
   };
 
   useEffect(() => {
-    if (!["tw", "en"].includes(params.lng)) {
+    if (!["zh-TW", "en"].includes(params.lng)) {
       router.push(`/`);
     }
     auth.authStateReady().then(() => {
