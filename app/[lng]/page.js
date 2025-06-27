@@ -91,7 +91,9 @@ export default function Home({ params: { lng } }) {
   };
 
   const inVokeJoinGame = () => {
-    setIsJoinGame(true);
+    if (user) {
+      setIsJoinGame(true);
+    }
   };
 
   const back = () => {
