@@ -45,6 +45,7 @@ export const homeTranslate = {
     weAte: "We Ate Chess: ",
     weLoose: "Opponent Ate Chess: ",
     Me: "You!",
+    Tie: "Tie!",
     Computer: "Opponent/Computer!",
   },
   "zh-TW": {
@@ -69,6 +70,7 @@ export const homeTranslate = {
     weAte: "我們吃了棋子: ",
     weLoose: "對手吃了棋子: ",
     Me: "你！",
+    Tie: "平手!",
     Computer: "對手/電腦",
   },
 };
@@ -149,7 +151,7 @@ export const gameEventTranslator = (lang, message, move) => {
       String(
         i18nChessMapping[lang].chess[currentChess.chess.sn[0]][
           currentChess.chess.type
-        ]
+        ],
       ) ?? ""
     }`;
   }
@@ -161,7 +163,7 @@ export const gameEventTranslator = (lang, message, move) => {
       String(
         i18nChessMapping[lang].chess[currentChess.chess.sn[0]][
           currentChess.chess.type
-        ]
+        ],
       ) ?? ""
     } ${gameEventMessage[lang]["canNotCommit"]} [${
       String(i18nChessMapping[lang][overChess.chess.sn[0]]) ?? ""
@@ -169,7 +171,7 @@ export const gameEventTranslator = (lang, message, move) => {
       String(
         i18nChessMapping[lang].chess[overChess.chess.sn[0]][
           overChess.chess.type
-        ]
+        ],
       ) ?? ""
     }`;
   }
@@ -181,7 +183,7 @@ export const gameEventTranslator = (lang, message, move) => {
       String(
         i18nChessMapping[lang].chess[currentChess.chess.sn[0]][
           currentChess.chess.type
-        ]
+        ],
       ) ?? ""
     } ${overChess.position} ${gameEventMessage[lang]["toEmptyPlace"]}`;
   }
@@ -193,7 +195,7 @@ export const gameEventTranslator = (lang, message, move) => {
       String(
         i18nChessMapping[lang].chess[currentChess.chess.sn[0]][
           currentChess.chess.type
-        ]
+        ],
       ) ?? ""
     } -> ${overChess.position} [${
       String(i18nChessMapping[lang][overChess.chess.sn[0]]) ?? ""
@@ -201,7 +203,7 @@ export const gameEventTranslator = (lang, message, move) => {
       String(
         i18nChessMapping[lang].chess[overChess.chess.sn[0]][
           overChess.chess.type
-        ]
+        ],
       ) ?? ""
     }`;
   }

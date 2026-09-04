@@ -10,6 +10,7 @@ import {
   faComment,
   faHouse,
   faCircleQuestion,
+  faFlag,
 } from "@fortawesome/free-solid-svg-icons";
 
 export function HeaderBase({ children }) {
@@ -56,6 +57,7 @@ export function GameHeader({
   setShowChatRoom,
   setShowInstructions,
   menuRef,
+  onEndGame,
 }) {
   const router = useRouter();
 
@@ -103,7 +105,7 @@ export function GameHeader({
       )}
 
       {gameId && (
-        <div ref={menuRef} className="absolute top-0 right-0 lg:hidden">
+        <div ref={menuRef} className="absolute top-0 right-12 lg:right-16 lg:hidden">
           <div className="p-3" onClick={() => extendRoom()}>
             <FontAwesomeIcon
               icon={faComment}
@@ -113,12 +115,27 @@ export function GameHeader({
           </div>
         </div>
       )}
+      {onEndGame && (
+        <button
+          type="button"
+          className="absolute top-0 right-0 p-3 lg:p-5 cursor-pointer"
+          onClick={onEndGame}
+          aria-label="End game"
+          title="End game"
+        >
+          <FontAwesomeIcon
+            icon={faFlag}
+            size="xl"
+            style={{ color: "#F1D6AE", borderColor: "#3C3B3B" }}
+          />
+        </button>
+      )}
     </>
   );
 }
 
 function generateRandomCode() {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let randomCode = "";
   for (let i = 0; i < 5; i++) {
     const randomIndex = Math.floor(Math.random() * characters.length);

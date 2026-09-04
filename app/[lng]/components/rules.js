@@ -175,11 +175,55 @@ export class ChessRules {
     }
   };
   // TODO: 判斷贏跟輸的函式，並在最後沒有步數可以下的時候顯示結算
-  isWinOrLose = (shuffledChess) => {
-    // console.log(shuffledChess);
+  getSideCounts = (shuffledChess) => {
+    const counts = { b: 0, r: 0 };
+    shuffledChess.forEach((chess) => {
+      if (chess === ".") return;
+      const side = chess.sn[0];
+      if (side === "b" || side === "r") {
+        counts[side] += 1;
+      }
+    });
+    return counts;
+  };
+
+  isAllTurned = (shuffledChess) =>
+    shuffledChess.every((chess) => chess === "." || chess.turned);
+
+  hasAnyLegalMove = (shuffledChess, sideColor) => {
+    if (!sideColor) return false;
+    for (let i = 0; i < shuffledChess.length; i += 1) {
+      const chess = shuffledChess[i];
+      if (chess === ".") continue;
+      if (!chess.turned) continue;
+      if (chess.sn[0] !== sideColor) continue;
+      const currentChess = { position: i, chess };
+      for (let j = 0; j < shuffledChess.length; j += 1) {
+        if (i === j) continue;
+        const overChess = { position: j, chess: shuffledChess[j] };
+        const result = this.isLegelMove(currentChess, overChess, shuffledChess);
+        if (result?.move && result.message !== "canNotCommit") {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  isWinOrLose = (shuffledChess, currentSideColor) => {
+    const counts = this.getSideCounts(shuffledChess);
+    if (counts.b === 0 && counts.r === 0) return null;
+    if (counts.b === 0) return { winnerSide: "r", reason: "noPieces" };
+    if (counts.r === 0) return { winnerSide: "b", reason: "noPieces" };
     // TODO: 都打開了
-    // TODO: 只剩下單色
-    // TODO: 只剩下砲，棋又小於 4
-    // TODO: 計算誰被吃
+    if (this.isAllTurned(shuffledChess)) {
+      const hasMove = this.hasAnyLegalMove(shuffledChess, currentSideColor);
+      if (!hasMove) {
+        const winnerSide = currentSideColor === "b" ? "r" : "b";
+        return { winnerSide, reason: "noMoves" };
+      }
+    }
+
+    return null;
   };
 }
