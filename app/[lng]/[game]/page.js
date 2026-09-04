@@ -213,33 +213,42 @@ function Board({
       b: 16 - sideCounts.r,
       r: 16 - sideCounts.b,
     };
+    const isTie = capturesBySide.b === capturesBySide.r;
     const winnerSide =
-      capturesBySide.b > capturesBySide.r
+      isTie
+        ? null
+        : capturesBySide.b > capturesBySide.r
         ? "b"
         : capturesBySide.r > capturesBySide.b
           ? "r"
           : result.winnerSide;
-    const winnerId = Object.keys(side).find(
-      (userId) => side[userId] === winnerSide,
-    );
-    if (!winnerId) return;
+    const winnerId = isTie
+      ? null
+      : Object.keys(side).find((userId) => side[userId] === winnerSide);
+    if (!isTie && !winnerId) return;
 
     const loserSide = winnerSide === "b" ? "r" : "b";
-    const winnerAte = capturesBySide[winnerSide];
-    const winnerLoose = capturesBySide[loserSide];
+    const winnerAte = isTie
+      ? capturesBySide.b
+      : capturesBySide[winnerSide];
+    const winnerLoose = isTie
+      ? capturesBySide.b
+      : capturesBySide[loserSide];
     hasWinnerRef.current = true;
     setIsWinner({
-      winner:
-        winnerSide === userSide
+      winner: isTie
+        ? homeTranslate[lng].Tie
+        : winnerSide === userSide
           ? currentUser.displayName
           : opponent.displayName,
-      weAte: winnerSide === userSide ? winnerAte : winnerLoose,
-      weLoose: winnerSide === userSide ? winnerLoose : winnerAte,
+      weAte: isTie || winnerSide === userSide ? winnerAte : winnerLoose,
+      weLoose: isTie || winnerSide === userSide ? winnerLoose : winnerAte,
     });
     updateGameResult(gameId, {
       winnerId,
       winnerAte,
       winnerLoose,
+      isTie,
       reason: result.reason,
     }).catch((error) => console.error("Error saving game result:", error));
 
@@ -415,6 +424,14 @@ function GameSection({
         }
         setSequence(data.sequence);
         if (data.result) {
+          if (data.result.isTie) {
+            setIsWinner({
+              winner: homeTranslate[lng].Tie,
+              weAte: data.result.winnerAte,
+              weLoose: data.result.winnerLoose,
+            });
+            return;
+          }
           console.log(data.result);
           const didWin = data.result.winnerId === auth.currentUser.uid;
           const winner =
@@ -677,7 +694,7 @@ function Result({ lng, isWinner, onNext }) {
   const backHomePage = () => {
     router.push(`/${lng}`);
   };
-  // TODO: Result 的人名沒搞好。
+  // TODO: 還沒處理平手的
 
   return (
     <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/30">
@@ -950,11 +967,17 @@ export default function Page({ params }) {
 
   const endGame = async () => {
     const currentGameStats = gameStatsRef.current;
-    const didWin = currentGameStats.weAte >= currentGameStats.weLoose;
+    const isTie = currentGameStats.weAte === currentGameStats.weLoose;
+    const didWin = currentGameStats.weAte > currentGameStats.weLoose;
     const result = {
-      winnerId: didWin ? auth.currentUser.uid : currentGameStats.opponentId,
+      winnerId: isTie
+        ? null
+        : didWin
+          ? auth.currentUser.uid
+          : currentGameStats.opponentId,
       winnerAte: didWin ? currentGameStats.weAte : currentGameStats.weLoose,
       winnerLoose: didWin ? currentGameStats.weLoose : currentGameStats.weAte,
+      isTie,
       reason: "manual",
     };
 
