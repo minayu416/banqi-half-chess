@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useMemo,
+  useRef,
+} from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -10,6 +16,7 @@ import {
   createOrJoinGame,
   updateSide,
   updateSequence,
+  updateGameResult,
   updatePosition,
   fetchLatestPosition,
   writeSendMessage,
@@ -142,15 +149,13 @@ function Board({
   sequence,
   changeSequence,
   setEventInfo,
+  setIsWinner,
+  setGameStats,
 }) {
   const [shuffledChess, setShuffledChess] = useState([]);
+  const hasWinnerRef = useRef(false);
   const showUserSide = currentUser.uid;
   const showOpponentSide = opponent.uid;
-
-  // TODO: 要記錄哪些棋子被吃掉了，然後顯示
-  const [ateOurSideChess, setAteOurSideChess] = useState([]);
-  const [ateOpptSideChess, setAteOpptSideChess] = useState([]);
-  // const [eventInfo, setEventInfo] = useState('<>');
 
   useEffect(() => {
     // 第一次 load 時先random 棋子、但未來要改成存進localStorage+更新firestore 以防止使用者F5刷新
@@ -166,6 +171,92 @@ function Board({
   }, [gameId]);
 
   const rules = useMemo(() => new ChessRules(), []);
+
+  useEffect(() => {
+    if (!side || shuffledChess.length === 0) return;
+
+    const userSide = side[showUserSide];
+    const opponentSide = side[showOpponentSide];
+    if (!userSide || !opponentSide) return;
+
+    const sideCounts = rules.getSideCounts(shuffledChess);
+    setGameStats({
+      weAte: 16 - sideCounts[opponentSide],
+      weLoose: 16 - sideCounts[userSide],
+      opponentId: showOpponentSide,
+    });
+  }, [
+    side,
+    shuffledChess,
+    rules,
+    showUserSide,
+    showOpponentSide,
+    setGameStats,
+  ]);
+
+  useEffect(() => {
+    if (!side || !sequence || shuffledChess.length === 0) return;
+    if (hasWinnerRef.current) return;
+
+    const currentSideColor = side[sequence];
+    if (!currentSideColor) return;
+
+    const result = rules.isWinOrLose(shuffledChess, currentSideColor);
+    if (!result) return;
+
+    const sideCounts = rules.getSideCounts(shuffledChess);
+    const userSide = side[showUserSide];
+    const opponentSide = side[showOpponentSide];
+    if (!userSide || !opponentSide) return;
+
+    const capturesBySide = {
+      b: 16 - sideCounts.r,
+      r: 16 - sideCounts.b,
+    };
+    const winnerSide =
+      capturesBySide.b > capturesBySide.r
+        ? "b"
+        : capturesBySide.r > capturesBySide.b
+          ? "r"
+          : result.winnerSide;
+    const winnerId = Object.keys(side).find(
+      (userId) => side[userId] === winnerSide,
+    );
+    if (!winnerId) return;
+
+    const loserSide = winnerSide === "b" ? "r" : "b";
+    const winnerAte = capturesBySide[winnerSide];
+    const winnerLoose = capturesBySide[loserSide];
+    hasWinnerRef.current = true;
+    setIsWinner({
+      winner:
+        winnerSide === userSide
+          ? currentUser.displayName
+          : opponent.displayName,
+      weAte: winnerSide === userSide ? winnerAte : winnerLoose,
+      weLoose: winnerSide === userSide ? winnerLoose : winnerAte,
+    });
+    updateGameResult(gameId, {
+      winnerId,
+      winnerAte,
+      winnerLoose,
+      reason: result.reason,
+    }).catch((error) => console.error("Error saving game result:", error));
+
+    if (result.reason === "noMoves") {
+      setEventInfo(gameEventTranslator(lng, "noAvailableMoves", null));
+    }
+  }, [
+    side,
+    sequence,
+    shuffledChess,
+    rules,
+    showUserSide,
+    showOpponentSide,
+    setEventInfo,
+    setIsWinner,
+    lng,
+  ]);
 
   function emitChange(translatedMessage, move) {
     const { currentChess, overChess } = move;
@@ -211,7 +302,7 @@ function Board({
     const { message, move } = rules.isLegelMove(
       activeData,
       overData,
-      shuffledChess
+      shuffledChess,
     );
     const translatedMessage = gameEventTranslator(lng, message, move);
     if (message != "canNotCommit" && move) {
@@ -269,7 +360,13 @@ function Board({
   );
 }
 
-function GameSection({ setEventInfo, eventInfo, params }) {
+function GameSection({
+  setEventInfo,
+  eventInfo,
+  setIsWinner,
+  setGameStats,
+  params,
+}) {
   const [side, setSide] = useState(null);
   const [sequence, setSequence] = useState(null);
 
@@ -317,6 +414,19 @@ function GameSection({ setEventInfo, eventInfo, params }) {
           setSide(data.side);
         }
         setSequence(data.sequence);
+        if (data.result) {
+          console.log(data.result);
+          const didWin = data.result.winnerId === auth.currentUser.uid;
+          const winner =
+            data.result.winnerId === data.creator?.uid
+              ? data.creator
+              : data.opponent;
+          setIsWinner({
+            winner: winner?.displayName ?? "",
+            weAte: didWin ? data.result.winnerAte : data.result.winnerLoose,
+            weLoose: didWin ? data.result.winnerLoose : data.result.winnerAte,
+          });
+        }
       }
     });
 
@@ -498,6 +608,8 @@ function GameSection({ setEventInfo, eventInfo, params }) {
                 sequence={sequence}
                 changeSequence={changeSequence}
                 setEventInfo={setEventInfo}
+                setIsWinner={setIsWinner}
+                setGameStats={setGameStats}
               />
             )}
           </div>
@@ -553,6 +665,71 @@ function GameSection({ setEventInfo, eventInfo, params }) {
               style={{ color: "#FFD43B" }}
             />
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Result({ lng, isWinner, onNext }) {
+  const router = useRouter();
+
+  const backHomePage = () => {
+    router.push(`/${lng}`);
+  };
+  // TODO: Result 的人名沒搞好。
+
+  return (
+    <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/30">
+      <div
+        className="w-5/6 md:w-3/6 lg:w-2/6 border rounded-md py-6 px-2 lg:px-8 lg:py-6 drop-shadow-md"
+        style={{ backgroundColor: "#9C836A", borderColor: "#B59376" }}
+      >
+        <p
+          className="text-2xl md:text-2xl font-bold text-center mb-1"
+          style={{ color: "#FFF3E8" }}
+        >
+          {homeTranslate[lng].winner}
+        </p>
+        <p className="text-center italic text-sm" style={{ color: "#FFF3E8" }}>
+          {isWinner.winner}
+        </p>
+        <p className="text-center italic text-sm" style={{ color: "#FFF3E8" }}>
+          {homeTranslate[lng].weAte}
+          {isWinner.weAte}
+        </p>
+        <p
+          className="mb-5 text-center italic text-sm"
+          style={{ color: "#FFF3E8" }}
+        >
+          {homeTranslate[lng].weLoose}
+          {isWinner.weLoose}
+        </p>
+        <div className="flex flex-col justify-center items-center">
+          <button
+            onClick={onNext}
+            className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+            style={{ backgroundColor: "#FFF3E8", borderColor: "#B59376" }}
+          >
+            <p
+              className="text-xl font-bold text-center"
+              style={{ color: "#96602E" }}
+            >
+              {homeTranslate[lng].next}
+            </p>
+          </button>
+          <button
+            onClick={backHomePage}
+            className="w-4/5 rounded-lg py-1 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+            style={{ backgroundColor: "#FFF3E8", borderColor: "#B59376" }}
+          >
+            <p
+              className="text-xl font-bold text-center"
+              style={{ color: "#96602E" }}
+            >
+              {homeTranslate[lng].back}
+            </p>
+          </button>
         </div>
       </div>
     </div>
@@ -754,6 +931,39 @@ export default function Page({ params }) {
   const [showChatRoom, setShowChatRoom] = useState(false);
   const [isGettingAuth, setIsGettingAuth] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [isWinner, setIsWinner] = useState(null);
+  const [gameStats, setGameStats] = useState({
+    weAte: 0,
+    weLoose: 0,
+    opponentId: null,
+  });
+  const gameStatsRef = useRef(gameStats);
+
+  const updateGameStats = useCallback((nextGameStats) => {
+    gameStatsRef.current = nextGameStats;
+    setGameStats(nextGameStats);
+  }, []);
+
+  const startNextGame = () => {
+    router.push(`/${params.lng}`);
+  };
+
+  const endGame = async () => {
+    const currentGameStats = gameStatsRef.current;
+    const didWin = currentGameStats.weAte >= currentGameStats.weLoose;
+    const result = {
+      winnerId: didWin ? auth.currentUser.uid : currentGameStats.opponentId,
+      winnerAte: didWin ? currentGameStats.weAte : currentGameStats.weLoose,
+      winnerLoose: didWin ? currentGameStats.weLoose : currentGameStats.weAte,
+      reason: "manual",
+    };
+
+    try {
+      await updateGameResult(params.game, result);
+    } catch (error) {
+      console.error("Error ending game:", error);
+    }
+  };
 
   const handleClickOutside = (event) => {
     if (
@@ -791,6 +1001,7 @@ export default function Page({ params }) {
           setShowChatRoom={setShowChatRoom}
           setShowInstructions={setShowInstructions}
           menuRef={menuRef}
+          onEndGame={isGettingAuth && gameStats.opponentId ? endGame : null}
         />
       </HeaderBase>
       {showInstructions && (
@@ -811,6 +1022,8 @@ export default function Page({ params }) {
           <GameSection
             setEventInfo={setEventInfo}
             eventInfo={eventInfo}
+            setIsWinner={setIsWinner}
+            setGameStats={updateGameStats}
             params={params}
           />
         )}
@@ -832,6 +1045,9 @@ export default function Page({ params }) {
           </div>
         )}
       </div>
+      {isWinner && (
+        <Result lng={params.lng} isWinner={isWinner} onNext={startNextGame} />
+      )}
     </>
   );
 }

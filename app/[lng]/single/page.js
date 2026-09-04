@@ -135,6 +135,7 @@ function Board({
   ateOpptSideChess,
 }) {
   const [shuffledChess, setShuffledChess] = useState([]);
+  const hasWinnerRef = useRef(false);
   const showUserSide = currentUser.displayName;
   const showOpponentSide = opponent.displayName;
 
@@ -150,7 +151,7 @@ function Board({
         const { message, move } = easyComputer(
           shuffledChess,
           side[opponent.displayName],
-          rules
+          rules,
         );
         const translatedMessage = gameEventTranslator(lng, message, move);
         if (move) {
@@ -168,19 +169,47 @@ function Board({
 
   const rules = useMemo(() => new ChessRules(), []);
 
-  // TODO: 計算誰輸誰贏
-  // useEffect(() => {
-  //   const isWin = rules.isWinOrLose(shuffledChess);
-  //   if (isWin) {
-  //     const result = {
-  //       winner:
-  //         ateOurSideChess.length > ateOpptSideChess.length ? "Computer" : "Me",
-  //       weAte: ateOpptSideChess.length,
-  //       weLoose: ateOurSideChess.length,
-  //     };
-  //     setIsWinner(result);
-  //   }
-  // }, [sequence]);
+  useEffect(() => {
+    // 是指還沒設定棋局時
+    if (!side || !sequence || shuffledChess.length === 0) return;
+    if (hasWinnerRef.current) return;
+    const currentSideColor = side[sequence];
+    if (!currentSideColor) return;
+    // 每一次下棋後都檢查一次有沒有贏了
+    const result = rules.isWinOrLose(shuffledChess, currentSideColor);
+    if (!result) return;
+
+    hasWinnerRef.current = true;
+    const weAte = ateOpptSideChess.length;
+    const weLoose = ateOurSideChess.length;
+    const winnerLabel =
+      weAte > weLoose
+        ? "Me"
+        : weAte < weLoose
+          ? "Computer"
+          : result.winnerSide === side[showUserSide]
+            ? "Me"
+            : "Computer";
+    setIsWinner({
+      winner: winnerLabel,
+      weAte,
+      weLoose,
+    });
+    if (result.reason === "noMoves") {
+      setEventInfo(gameEventTranslator(lng, "noAvailableMoves", null));
+    }
+  }, [
+    side,
+    sequence,
+    shuffledChess,
+    rules,
+    showUserSide,
+    ateOurSideChess.length,
+    ateOpptSideChess.length,
+    setEventInfo,
+    setIsWinner,
+    lng,
+  ]);
 
   function emitChange(translatedMessage, move) {
     const { currentChess, overChess } = move;
@@ -225,7 +254,7 @@ function Board({
     const { message, move } = rules.isLegelMove(
       activeData,
       overData,
-      shuffledChess
+      shuffledChess,
     );
     const translatedMessage = gameEventTranslator(lng, message, move);
     if (message != "canNotCommit" && move) {
@@ -291,6 +320,10 @@ function GameSection({
   eventInfo,
   setIsWinner,
   params,
+  ateOurSideChess,
+  setAteOurSideChess,
+  ateOpptSideChess,
+  setAteOpptSideChess,
 }) {
   const [side, setSide] = useState(null);
   const [sequence, setSequence] = useState(null);
@@ -302,9 +335,6 @@ function GameSection({
 
   const showUserSide = currentUser.displayName;
   const showOpponentSide = opponent.displayName;
-
-  const [ateOurSideChess, setAteOurSideChess] = useState([]);
-  const [ateOpptSideChess, setAteOpptSideChess] = useState([]);
 
   const recordAteChess = (overChess) => {
     if (side[showUserSide] === overChess.chess.sn[0]) {
@@ -517,15 +547,13 @@ function GameSection({
   );
 }
 
-function Result({ lng, isWinner }) {
+function Result({ lng, isWinner, onNext }) {
   const router = useRouter();
 
-  const next = () => {
-    router.push(`/${params.lng}/single`);
-  };
   const backHomePage = () => {
-    router.push(`/${params.lng}`);
+    router.push(`/${lng}`);
   };
+
   return (
     <>
       <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/30">
@@ -550,18 +578,18 @@ function Result({ lng, isWinner }) {
             style={{ color: "#FFF3E8" }}
           >
             {homeTranslate[lng]["weAte"]}
-            {homeTranslate[lng][isWinner.weAte]}
+            {isWinner.weAte}
           </p>
           <p
             className={`mb-5 text-center italic text-sm`}
             style={{ color: "#FFF3E8" }}
           >
             {homeTranslate[lng]["weLoose"]}
-            {homeTranslate[lng][isWinner.weLoose]}
+            {isWinner.weLoose}
           </p>
           <div className="flex flex-col justify-center items-center">
             <button
-              onClick={() => next()}
+              onClick={onNext}
               className="w-4/5 rounded-lg py-1 mb-3 shadow-md hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
               style={{
                 backgroundColor: "#FFF3E8",
@@ -669,6 +697,31 @@ export default function Page({ params }) {
   const [showInstructions, setShowInstructions] = useState(false);
   const [singleMode, setSingleMode] = useState(null);
   const [isWinner, setIsWinner] = useState(null);
+  const [gameKey, setGameKey] = useState(0);
+  const [ateOurSideChess, setAteOurSideChess] = useState([]);
+  const [ateOpptSideChess, setAteOpptSideChess] = useState([]);
+
+  const startNextGame = () => {
+    setEventInfo("<>");
+    setIsWinner(null);
+    setAteOurSideChess([]);
+    setAteOpptSideChess([]);
+    setGameKey((currentKey) => currentKey + 1);
+  };
+
+  const endGame = () => {
+    const winnerLabel =
+      ateOpptSideChess.length > ateOurSideChess.length
+        ? "Me"
+        : ateOpptSideChess.length === ateOurSideChess.length
+          ? "Tie"
+          : "Computer";
+    setIsWinner({
+      winner: winnerLabel,
+      weAte: ateOpptSideChess.length,
+      weLoose: ateOurSideChess.length,
+    });
+  };
 
   const handleClickOutside = (event) => {
     if (
@@ -704,6 +757,7 @@ export default function Page({ params }) {
               setShowChatRoom={null}
               setShowInstructions={setShowInstructions}
               menuRef={menuRef}
+              onEndGame={singleMode ? endGame : null}
             />
           </HeaderBase>
           {showInstructions && (
@@ -715,11 +769,16 @@ export default function Page({ params }) {
 
           <div className="min-h-screen py-6 px-4 lg:py-24 lg:px-12 flex w-full">
             <GameSection
+              key={gameKey}
               singleMode={singleMode}
               setEventInfo={setEventInfo}
               eventInfo={eventInfo}
               setIsWinner={setIsWinner}
               params={params}
+              ateOurSideChess={ateOurSideChess}
+              setAteOurSideChess={setAteOurSideChess}
+              ateOpptSideChess={ateOpptSideChess}
+              setAteOpptSideChess={setAteOpptSideChess}
             />
 
             <div className="hidden lg:flex w-1/3 flex-col justify-center items-center">
@@ -731,8 +790,13 @@ export default function Page({ params }) {
               </div>
             </div>
           </div>
-          {/* TODO: 計算誰輸誰贏 */}
-          {/* {isWinner && <Result lng={params.lng} isWinner={isWinner} />} */}
+          {isWinner && (
+            <Result
+              lng={params.lng}
+              isWinner={isWinner}
+              onNext={startNextGame}
+            />
+          )}
 
           {!singleMode && (
             <ChooseMode lng={params.lng} setSingleMode={setSingleMode} />

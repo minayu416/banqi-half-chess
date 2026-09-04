@@ -58,6 +58,16 @@ export const updateSequence = async (gameId, sequence) => {
     });
 }
 
+export const updateGameResult = async (gameId, result) => {
+  const docRef = doc(db, "games", gameId);
+  await updateDoc(docRef, {
+    result: {
+      ...result,
+      endedAt: serverTimestamp(),
+    },
+  });
+};
+
 export const checkGameIdExists = async (gameId) => {
   try {
     const docRef = doc(db, "games", gameId);
